@@ -34,10 +34,18 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     String getName();
 
+    /**
+     * @param series the index of the series
+     * @return the type of the series
+     */
     default DataType getType(int series) {
         return get(series).getType();
     }
 
+    /**
+     * @param series the name of the series
+     * @return the type of the series
+     */
     default DataType getType(final String series) {
         return get(series).getType();
     }
@@ -206,6 +214,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
 
     /**
      * Perform a simple query on the dataframe. Currently only supports single equality operators
+     *
      * @param query the query
      * @return a dataframe that is the subset as specified by the query
      */

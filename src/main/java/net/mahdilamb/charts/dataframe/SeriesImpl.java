@@ -133,11 +133,8 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
             for (int i = 0; i < end; ++i) {
                 data[i] = converter.test(source.get(i));
-
             }
-
         }
-
     }
 
     /**

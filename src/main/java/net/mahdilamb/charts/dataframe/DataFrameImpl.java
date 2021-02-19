@@ -601,6 +601,7 @@ abstract class DataFrameImpl implements DataFrame {
                         }
                         i = query.length();
                     } else {
+                        //TODO check for correct quotes
                         nameStart = i;
                         nameEnd = nameStart;
                         while (query.charAt(nameEnd) != ' ' && !isComparator(query.charAt(nameEnd))) {
@@ -615,7 +616,6 @@ abstract class DataFrameImpl implements DataFrame {
 
             if (i >= query.length()) {
                 final Series<?> series = get(query.substring(nameStart, nameEnd));
-                int len = opEnd - opStart;
                 switch (series.getType()) {
                     case STRING:
                         return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it);
@@ -637,23 +637,24 @@ abstract class DataFrameImpl implements DataFrame {
         final String value = query.substring(valStart, valEnd);
         final Series<?> series = source.get(query.substring(nameStart, nameEnd));
         int len = opEnd - opStart;
+        if (len == 2 && query.charAt(opEnd - 1) != '=') {
+            throw new IllegalArgumentException();
+        }
+        final U val = converter.apply(value);
         switch (query.charAt(opStart)) {
             case '<':
             case '>':
                 if (len == 2) {
-                    if (query.charAt(opEnd-1) != '=') {
-                        throw new IllegalArgumentException();
-                    }
                     if (query.charAt(opStart) == '<') {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) <= 0);
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) <= 0);
                     } else {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) >= 0);
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) >= 0);
                     }
                 } else if (len == 1) {
                     if (query.charAt(opStart) == '<') {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) < 0);
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) < 0);
                     } else {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) > 0);
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) > 0);
                     }
                 } else {
                     throw new IllegalArgumentException();
@@ -664,9 +665,9 @@ abstract class DataFrameImpl implements DataFrame {
                     throw new IllegalArgumentException();
                 }
                 if (query.charAt(opStart) == '=') {
-                    return source.filter(series.getName(), it -> it.equals(converter.apply(value)));
+                    return source.filter(series.getName(), it -> it.equals(val));
                 } else {
-                    return source.filter(series.getName(), it -> !it.equals(converter.apply(value)));
+                    return source.filter(series.getName(), it -> !it.equals(val));
                 }
             default:
                 throw new UnsupportedOperationException();
