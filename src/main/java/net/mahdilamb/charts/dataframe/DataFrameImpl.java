@@ -560,7 +560,7 @@ abstract class DataFrameImpl implements DataFrame {
     }
 
     @Override
-    //todo brackets, || and &&
+    //todo  | and & and consider type precedence e.g. long v double should compare as double
     public DataFrame query(String query) {
         int nameStart = 0;
         int nameEnd = -1;
@@ -618,13 +618,13 @@ abstract class DataFrameImpl implements DataFrame {
                 final Series<?> series = get(query.substring(nameStart, nameEnd));
                 switch (series.getType()) {
                     case STRING:
-                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it);
-                    case BOOLEAN:
-                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toBoolean);
+                        return filter(series.getName(),(Predicate<String>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it));
+                        case BOOLEAN:
+                        return filter(series.getName(),(Predicate<Boolean>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toBoolean));
                     case LONG:
-                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toLong);
+                        return filter(series.getName(),(Predicate<Long>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toLong));
                     case DOUBLE:
-                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toDouble);
+                        return filter(series.getName(),(Predicate<Double>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toDouble));
                     default:
                         throw new UnsupportedOperationException();
                 }
@@ -633,7 +633,7 @@ abstract class DataFrameImpl implements DataFrame {
     }
 
     @SuppressWarnings("unchecked")
-    static <U extends Comparable<U>> DataFrame doQuery(final DataFrame source, String query, int nameStart, int nameEnd, int opStart, int opEnd, int valStart, int valEnd, Function<String, U> converter) {
+    static <U extends Comparable<U>> Predicate<U> query0(final DataFrame source, String query, int nameStart, int nameEnd, int opStart, int opEnd, int valStart, int valEnd, Function<String, U> converter) {
         final String value = query.substring(valStart, valEnd);
         final Series<?> series = source.get(query.substring(nameStart, nameEnd));
         int len = opEnd - opStart;
@@ -646,15 +646,15 @@ abstract class DataFrameImpl implements DataFrame {
             case '>':
                 if (len == 2) {
                     if (query.charAt(opStart) == '<') {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) <= 0);
+                        return it -> it.compareTo(val) <= 0;
                     } else {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) >= 0);
+                        return it -> it.compareTo(val) >= 0;
                     }
                 } else if (len == 1) {
                     if (query.charAt(opStart) == '<') {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) < 0);
+                        return it -> it.compareTo(val) < 0;
                     } else {
-                        return source.filter(series.getName(), it -> ((U) it).compareTo(val) > 0);
+                        return it -> it.compareTo(val) > 0;
                     }
                 } else {
                     throw new IllegalArgumentException();
@@ -665,9 +665,9 @@ abstract class DataFrameImpl implements DataFrame {
                     throw new IllegalArgumentException();
                 }
                 if (query.charAt(opStart) == '=') {
-                    return source.filter(series.getName(), it -> it.equals(val));
+                    return it -> it.equals(val);
                 } else {
-                    return source.filter(series.getName(), it -> !it.equals(val));
+                    return it -> !it.equals(val);
                 }
             default:
                 throw new UnsupportedOperationException();

@@ -5,6 +5,7 @@ import net.mahdilamb.charts.dataframe.utils.StringUtils;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -101,7 +102,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * Get an iterable over the names of the series
      */
     default Iterable<String> seriesNames() {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<String>() {
             private int i = 0;
 
             @Override
@@ -120,7 +121,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * Get an iterable over the datatypes of the series
      */
     default Iterable<DataType> dataTypes() {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<DataType>() {
             private int i = 0;
 
             @Override
@@ -314,7 +315,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     @Override
     default Iterator<Series<Comparable<Object>>> iterator() {
-        return new Iterator<>() {
+        return new Iterator<Series<Comparable<Object>>>() {
             private int i = 0;
 
             @Override

@@ -39,7 +39,7 @@ public interface Series<T> extends Iterable<T> {
 
     @Override
     default Iterator<T> iterator() {
-        return new Iterator<>() {
+        return new Iterator<T>() {
             private int i = 0;
 
             @Override
@@ -82,7 +82,7 @@ public interface Series<T> extends Iterable<T> {
             case BOOLEAN:
                 return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((Boolean) el));
             case LONG:
-                return new SeriesImpl.OfDoubleArray((LongSeries) this, DataType::toDouble);
+                return new SeriesImpl.OfDoubleArray((Series<Long>) this, DataType::toDouble);
             case STRING:
                 return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((String) el));
             default:
