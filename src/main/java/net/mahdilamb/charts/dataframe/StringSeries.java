@@ -2,7 +2,7 @@ package net.mahdilamb.charts.dataframe;
 
 import java.util.regex.Pattern;
 
-public interface StringSeries extends DataSeries<String> , SeriesWithFunctionalOperators<String>{
+public interface StringSeries extends Series<String>, SeriesWithFunctionalOperators<String> {
     @Override
     default DataType getType() {
         return DataType.STRING;

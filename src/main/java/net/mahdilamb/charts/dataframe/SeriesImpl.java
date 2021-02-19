@@ -12,15 +12,15 @@ import java.util.function.*;
  *
  * @param <T> the type of the elements in the series
  */
-abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>, SeriesWithFunctionalOperators<T> {
+abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesWithFunctionalOperators<T> {
     static int MAX_VISIBLE_CELLS = 10;
 
-    static final class AsTypeArray<S extends Comparable<S>, T extends Comparable<T>> extends DataSeriesImpl<T> {
-        private final DataSeries<S> source;
+    static final class AsTypeArray<S extends Comparable<S>, T extends Comparable<T>> extends SeriesImpl<T> {
+        private final Series<S> source;
         private final Function<S, T> converter;
         private final DataType dataType;
 
-        AsTypeArray(DataSeries<S> source, DataType dataType, Function<S, T> converter) {
+        AsTypeArray(Series<S> source, DataType dataType, Function<S, T> converter) {
             super(source.getName());
             this.source = source;
             this.converter = converter;
@@ -40,12 +40,12 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
         }
     }
 
-    static final class AsNumericTypeArray<S extends Comparable<S>, T extends Number & Comparable<T>> extends DataSeriesImpl<T> implements NumericSeries<T> {
-        private final DataSeries<S> source;
+    static final class AsNumericTypeArray<S extends Comparable<S>, T extends Number & Comparable<T>> extends SeriesImpl<T> implements NumericSeries<T> {
+        private final Series<S> source;
         private final Function<S, T> converter;
         private final DataType dataType;
 
-        AsNumericTypeArray(DataSeries<S> source, DataType dataType, Function<S, T> converter) {
+        AsNumericTypeArray(Series<S> source, DataType dataType, Function<S, T> converter) {
             super(source.getName());
             this.source = source;
             this.converter = converter;
@@ -74,7 +74,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a double array
      */
-    static final class OfDoubleArray extends DataSeriesImpl<Double> implements DoubleSeries {
+    static final class OfDoubleArray extends SeriesImpl<Double> implements DoubleSeries {
         final double[] data;
 
         OfDoubleArray(final String name, final double... data) {
@@ -92,7 +92,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
             }
         }
 
-        <S extends Comparable<S>> OfDoubleArray(DataSeries<S> source, ToDoubleFunction<S> converter) {
+        <S> OfDoubleArray(Series<S> source, ToDoubleFunction<S> converter) {
             super(source.getName());
             this.data = new double[source.size()];
             this.end = source.size();
@@ -111,7 +111,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a boolean array
      */
-    static final class OfBooleanArray extends DataSeriesImpl<Boolean> implements BooleanSeries {
+    static final class OfBooleanArray extends SeriesImpl<Boolean> implements BooleanSeries {
         final boolean[] data;
 
         OfBooleanArray(final String name, final boolean... data) {
@@ -125,12 +125,15 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
             return data[index];
         }
 
-        <S extends Comparable<S>> OfBooleanArray(DataSeries<S> source, Predicate<S> converter) {
+        <S> OfBooleanArray(Series<S> source, Predicate<S> converter) {
             super(source.getName());
-            this.end = source.size();
+
             data = new boolean[source.size()];
-            for (int i = 0; i < source.size(); ++i) {
+            this.end = data.length;
+
+            for (int i = 0; i < end; ++i) {
                 data[i] = converter.test(source.get(i));
+
             }
 
         }
@@ -140,7 +143,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a double array
      */
-    static final class OfStringArray extends DataSeriesImpl<String> implements StringSeries {
+    static final class OfStringArray extends SeriesImpl<String> implements StringSeries {
         final String[] data;
 
         OfStringArray(final String name, final String... data) {
@@ -149,7 +152,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
             this.end = data.length;
         }
 
-        <S extends Comparable<S>> OfStringArray(DataSeries<S> source, Function<S, String> converter) {
+        <S> OfStringArray(Series<S> source, Function<S, String> converter) {
             super(source.getName());
             this.end = source.size();
             data = new String[source.size()];
@@ -168,7 +171,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a string, which parses to double when required
      */
-    static final class OfStringToDoubleArray extends DataSeriesImpl<Double> implements DoubleSeries {
+    static final class OfStringToDoubleArray extends SeriesImpl<Double> implements DoubleSeries {
 
         private final String[] data;
 
@@ -188,7 +191,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a string, which parses to long when required
      */
-    static final class OfStringToLongArray extends DataSeriesImpl<Long> implements LongSeries {
+    static final class OfStringToLongArray extends SeriesImpl<Long> implements LongSeries {
 
         private final String[] data;
 
@@ -210,21 +213,17 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     }
 
 
-    static final class OfLongArray extends DataSeriesImpl<Long> implements LongSeries {
-        final long[] data;
-        int[] isNaN;
-        int nanCount;
+    static final class OfLongArray extends SeriesImpl<Long> implements LongSeries {
+        final Long[] data;
 
         /**
          * Create an abstract named series
          *
          * @param name the name of the series
          */
-        OfLongArray(String name, long[] data, int[] isNaN, int nanCount) {
+        OfLongArray(String name, Long[] data) {
             super(name);
             this.data = data;
-            this.isNaN = isNaN;
-            this.nanCount = nanCount;
             this.end = data.length;
         }
 
@@ -235,8 +234,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
 
         @Override
         public boolean isNaN(int index) {
-            int i = Arrays.binarySearch(isNaN, 0, nanCount, index);
-            return i != -1;
+            return data[index] == null;
         }
 
         static int[] ensureCapacity(int[] array, int newCapacity) {
@@ -246,27 +244,23 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
             return array;
         }
 
-        <S extends Comparable<S>> OfLongArray(DataSeries<S> source, ToLongFunction<S> converter, Predicate<S> notNanTest) {
+        <S> OfLongArray(Series<S> source, ToLongFunction<S> converter, Predicate<S> notNanTest) {
             super(source.getName());
-            data = new long[source.size()];
-            nanCount = 0;
-            isNaN = new int[4];
+            data = new Long[source.size()];
             this.end = source.size();
 
             for (int i = 0; i < source.size(); ++i) {
                 if (notNanTest.test(source.get(i))) {
                     data[i] = converter.applyAsLong(source.get(i));
                 } else {
-                    data[i] = 0;
-                    isNaN = ensureCapacity(isNaN, ++nanCount);
-                    isNaN[nanCount - 1] = i;
+                    data[i] = null;
                 }
             }
         }
 
     }
 
-    static final class OfNonNaNLongArray extends DataSeriesImpl<Long> implements LongSeries {
+    static final class OfNonNaNLongArray extends SeriesImpl<Long> implements LongSeries {
         final long[] data;
 
 
@@ -281,7 +275,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
             this.end = data.length;
         }
 
-        <S extends Comparable<S>> OfNonNaNLongArray(DataSeries<S> source, ToLongFunction<S> converter) {
+        <S> OfNonNaNLongArray(Series<S> source, ToLongFunction<S> converter) {
             super(source.getName());
             data = new long[source.size()];
             this.end = source.size();
@@ -307,7 +301,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a collection of objects
      */
-    static final class OfFunctionalDouble extends DataSeriesImpl<Double> implements DoubleSeries {
+    static final class OfFunctionalDouble extends SeriesImpl<Double> implements DoubleSeries {
         private final IntToDoubleFunction dataGetter;
 
         OfFunctionalDouble(final String name, int size, IntToDoubleFunction dataGetter) {
@@ -326,7 +320,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     /**
      * Default implementation of a series backed by a string, which parses to boolean when accessed
      */
-    static final class OfStringToBooleanArray extends DataSeriesImpl<Boolean> implements BooleanSeries {
+    static final class OfStringToBooleanArray extends SeriesImpl<Boolean> implements BooleanSeries {
 
         private final String[] data;
 
@@ -343,7 +337,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
 
     }
 
-    static final class RepeatedString extends DataSeriesImpl<String> implements StringSeries {
+    static final class RepeatedString extends SeriesImpl<String> implements StringSeries {
 
         private final StringRepetition[] repeats;
 
@@ -425,7 +419,7 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
      *
      * @param name the name of the series
      */
-    protected DataSeriesImpl(final String name) {
+    protected SeriesImpl(final String name) {
         this.name = name;
     }
 
@@ -439,33 +433,33 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
         return end - start;
     }
 
-    @SuppressWarnings("unchecked")
-    static String formatCell(DataSeries<?> series, int index) {
-        return series.getType() == DataType.LONG && ((NumericSeries<Long>) series).isNaN(index) ? "NaN" : String.valueOf(series.get(index));
+    @Override
+    public int getID(int index) {
+        return index;
     }
 
-    int getId(int i) {
-        return i;
+    static String formatCell(Series<?> series, int index) {
+        return String.valueOf(series.get(index));
     }
 
     @Override
     public String toString() {
         final StringBuilder stringBuilder = new StringBuilder();
         if (size() > 1) {
-            int width = Math.max(1, String.valueOf(getId(size() - 1)).length());
+            int width = Math.max(1, String.valueOf(getID(size() - 1)).length());
             if (size() <= MAX_VISIBLE_CELLS) {
                 for (int i = 0; i < size(); ++i) {
-                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getId(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
+                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
                 }
             } else {
                 int halfRows = MAX_VISIBLE_CELLS >>> 1;
                 for (int i = 0; i < halfRows; ++i) {
-                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getId(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
+                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
                 }
                 //ellipses
                 DataFrameImpl.alignRight(stringBuilder, StringUtils.repeatCharacter('.', Math.min(3, Math.max(width, 1))), width).append(DataFrameImpl.COLUMN_SEPARATOR).append("...\n");
                 for (int i = size() - halfRows; i < size(); ++i) {
-                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getId(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
+                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
                 }
             }
 
@@ -475,28 +469,28 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
     }
 
     @Override
-    public DataSeries<T> subset(int start, int end) {
-        return new DataSeriesView<>(this, start, end);
+    public Series<T> subset(int start, int end) {
+        return new SeriesView<>(this, start, end);
     }
 
     @Override
-    public DataSeries<T> subset(IntPredicate test) {
-        return new DataSeriesView<>(this, test);
+    public Series<T> subset(IntPredicate test) {
+        return new SeriesView<>(this, test);
     }
 
-    static final class DataSeriesView<T extends Comparable<T>> extends DataSeriesImpl<T> {
+    static class SeriesView<T extends Comparable<T>> extends SeriesImpl<T> {
 
-        final DataSeries<T> dataSeries;
+        final Series<T> dataSeries;
         int[] rows;
         int numRows;
 
-        public DataSeriesView(DataSeries<T> dataSeries, int[] ids, int numRows) {
+        public SeriesView(Series<T> dataSeries, int[] ids, int numRows) {
             super(dataSeries.getName());
-            if (dataSeries.getClass() == DataSeriesView.class) {
-                this.dataSeries = ((DataSeriesView<T>) dataSeries).dataSeries;
+            if (dataSeries.getClass() == SeriesView.class) {
+                this.dataSeries = ((SeriesView<T>) dataSeries).dataSeries;
                 rows = new int[ids.length];
                 for (int i = 0; i < ids.length; ++i) {
-                    rows[i] = ((DataSeriesView<T>) dataSeries).getId(ids[i]);
+                    rows[i] = dataSeries.getID(ids[i]);
                 }
             } else {
                 this.dataSeries = dataSeries;
@@ -506,20 +500,20 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
 
         }
 
-        public DataSeriesView(DataSeries<T> dataSeries, int[] ids) {
+        public SeriesView(Series<T> dataSeries, int[] ids) {
             this(dataSeries, ids, ids.length);
         }
 
-        public DataSeriesView(DataSeries<T> dataSeries, IntPredicate test) {
+        public SeriesView(Series<T> dataSeries, IntPredicate test) {
             super(dataSeries.getName());
             int j = 0;
             int i = 0;
-            if (dataSeries.getClass() == DataSeriesView.class) {
-                this.dataSeries = ((DataSeriesView<T>) dataSeries).dataSeries;
+            if (dataSeries.getClass() == SeriesView.class) {
+                this.dataSeries = ((SeriesView<T>) dataSeries).dataSeries;
                 this.rows = new int[dataSeries.size()];
 
                 while (i < dataSeries.size()) {
-                    int k = ((DataSeriesView<T>) dataSeries).getId(i);
+                    int k = dataSeries.getID(i);
                     if (test.test(k)) {
                         rows[j++] = k;
                     }
@@ -539,12 +533,12 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
 
         }
 
-        protected DataSeriesView(DataSeries<T> dataSeries, int start, int end) {
+        protected SeriesView(Series<T> dataSeries, int start, int end) {
             this(dataSeries, DataFrameImpl.range(start, end));
         }
 
         @Override
-        int getId(int i) {
+        public int getID(int i) {
             return rows[i];
         }
 
@@ -564,4 +558,66 @@ abstract class DataSeriesImpl<T extends Comparable<T>> implements DataSeries<T>,
         }
     }
 
+    static class LongSeriesView extends SeriesView<Long> implements LongSeries {
+
+        public LongSeriesView(SeriesView<Long> dataSeries) {
+            super(dataSeries.dataSeries, dataSeries.rows, dataSeries.numRows);
+        }
+
+        @Override
+        public long getLong(int index) {
+            return ((LongSeries) dataSeries).getLong(rows[index]);
+        }
+
+        @Override
+        public boolean isNaN(int index) {
+            return ((LongSeries) dataSeries).isNaN(rows[index]);
+        }
+    }
+
+    static class DoubleSeriesView extends SeriesView<Double> implements DoubleSeries {
+
+        public DoubleSeriesView(SeriesView<Double> dataSeries) {
+            super(dataSeries.dataSeries, dataSeries.rows, dataSeries.numRows);
+        }
+
+        @Override
+        public double getDouble(int index) {
+            return ((DoubleSeries) dataSeries).getDouble(rows[index]);
+        }
+
+    }
+
+    static class StringSeriesView extends SeriesView<String> implements StringSeries {
+
+        public StringSeriesView(SeriesView<String> dataSeries) {
+            super(dataSeries.dataSeries, dataSeries.rows, dataSeries.numRows);
+        }
+
+    }
+
+    static class BooleanSeriesView extends SeriesView<Boolean> implements BooleanSeries {
+
+        public BooleanSeriesView(SeriesView<Boolean> dataSeries) {
+            super(dataSeries.dataSeries, dataSeries.rows, dataSeries.numRows);
+        }
+
+        @Override
+        public boolean getBoolean(int index) {
+            return ((BooleanSeries) dataSeries).getBoolean(rows[index]);
+        }
+
+    }
+
+    @Override
+    public Series<T> filter(BooleanSeries filter) {
+        final int[] ids = new int[filter.size()];
+        int size = 0;
+        for (int i = 0; i < filter.size(); ++i) {
+            if (filter.get(i)) {
+                ids[size++] = i;
+            }
+        }
+        return new SeriesView<>(this, ids, size);
+    }
 }

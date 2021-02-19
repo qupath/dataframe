@@ -59,6 +59,18 @@ public enum DataType {
     }
 
     /**
+     * Test whether a string can be convert to this type
+     *
+     * @param string the string
+     * @param start  the start index
+     * @param end    the end index
+     * @return whether the string can be cast to this type
+     */
+    public boolean matches(String string, int start, int end) {
+        return string != null && matcher.matcher(string).region(start, end).matches();
+    }
+
+    /**
      * Cast a string to a double
      *
      * @param value the string
@@ -208,4 +220,8 @@ public enum DataType {
     }
 
 
+    @Override
+    public String toString() {
+        return super.toString().toLowerCase();
+    }
 }

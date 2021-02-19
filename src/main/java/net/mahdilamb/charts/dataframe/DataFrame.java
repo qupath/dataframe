@@ -2,19 +2,24 @@ package net.mahdilamb.charts.dataframe;
 
 import net.mahdilamb.charts.dataframe.utils.StringUtils;
 
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.PrimitiveIterator;
+import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static net.mahdilamb.charts.dataframe.utils.StringUtils.getStringFromClipboard;
 
 /**
  * Datasets are a series of named series. They can be thought of as a table.
  */
-public interface DataFrame extends Iterable<DataSeries<?>> {
+public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     /**
      * The default quote character to use when reading a text file
      */
@@ -48,15 +53,15 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      * @param series the index of interest
      * @return the series at the index
      */
-    DataSeries<?> get(final int series);
+    Series<Comparable<Object>> get(final int series);
 
     /**
      * @param name name of the series
      * @return series by its name or {@code null} if series not found
      */
-    default DataSeries<?> get(final String name) {
+    default Series<Comparable<Object>> get(final String name) {
         for (int i = 0; i < numSeries(); ++i) {
-            final DataSeries<?> s = get(i);
+            final Series<Comparable<Object>> s = get(i);
             if (s.getName().compareTo(name) == 0) {
                 return s;
             }
@@ -69,23 +74,7 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      * @param names the names of the columns of interest
      * @return a new data frame with the column names as specified
      */
-    default DataFrame subset(String... names) {
-        @SuppressWarnings("unchecked") final DataSeries<?>[] series = new DataSeries[names.length];
-        for (int j = 0; j < names.length; ++j) {
-            boolean found = false;
-            for (int i = 0; i < numSeries(); ++i) {
-                if (get(i).getName().equals(names[j])) {
-                    series[j] = get(i);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                throw new IllegalArgumentException("Could not find column by name " + names[j]);
-            }
-        }
-        return new DataFrameImpl.OfArray(getName(), series);
-    }
+    DataFrame subset(String... names);
 
     /**
      * Get a value from a series
@@ -96,7 +85,7 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      * @apiNote the return type is intentionally an object. For primitive return types, get a series of known
      * type using the relevant methods
      */
-    default Object get(int series, int index) {
+    default Comparable<Object> get(int series, int index) {
         return get(series).get(index);
     }
 
@@ -178,14 +167,14 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
     /**
      * @return the first series
      */
-    default DataSeries<?> first() {
+    default Series<Comparable<Object>> first() {
         return get(0);
     }
 
     /**
      * @return the last series
      */
-    default DataSeries<?> last() {
+    default Series<Comparable<Object>> last() {
         return get(numSeries() - 1);
     }
 
@@ -207,6 +196,21 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      */
     DataFrame subset(Predicate<String> test);
 
+    DataFrame filter(BooleanSeries filter);
+
+    <S extends Comparable<S>> DataFrame filter(String series, Predicate<S> test);
+
+    default DataFrame filter(Function<DataFrame, BooleanSeries> filter) {
+        return filter(filter.apply(this));
+    }
+
+    /**
+     * Perform a simple query on the dataframe. Currently only supports single equality operators
+     * @param query the query
+     * @return a dataframe that is the subset as specified by the query
+     */
+    DataFrame query(final String query);
+
     /**
      * Check the type of a series
      *
@@ -224,19 +228,19 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      * @param index the index of the series
      * @return the series
      */
-    default DoubleSeries getDoubleSeries(final int index) throws DataSeriesCastException {
+    default DoubleSeries getDoubleSeries(final int index) throws SeriesCastException {
         return get(index).asDouble();
     }
 
-    default DoubleSeries getDoubleSeries(final String seriesName) throws DataSeriesCastException {
+    default DoubleSeries getDoubleSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asDouble();
     }
 
-    default StringSeries getStringSeries(final String seriesName) throws DataSeriesCastException {
+    default StringSeries getStringSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asString();
     }
 
-    default LongSeries getLongSeries(final String seriesName) throws DataSeriesCastException {
+    default LongSeries getLongSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asLong();
     }
 
@@ -245,9 +249,9 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      *
      * @param index the index of the series
      * @return the series
-     * @throws DataSeriesCastException if the series cannot be cast to a boolean series
+     * @throws SeriesCastException if the series cannot be cast to a boolean series
      */
-    default BooleanSeries getBooleanSeries(final int index) throws DataSeriesCastException {
+    default BooleanSeries getBooleanSeries(final int index) throws SeriesCastException {
         return get(index).asBoolean();
     }
 
@@ -256,9 +260,9 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      *
      * @param index the index of the series
      * @return the series
-     * @throws DataSeriesCastException if the series cannot be cast to a long series
+     * @throws SeriesCastException if the series cannot be cast to a long series
      */
-    default LongSeries getLongSeries(final int index) throws DataSeriesCastException {
+    default LongSeries getLongSeries(final int index) throws SeriesCastException {
         return get(index).asLong();
     }
 
@@ -267,9 +271,9 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      *
      * @param index the index of index
      * @return a string series at the index
-     * @throws DataSeriesCastException if the series cannot be cast to a string series
+     * @throws SeriesCastException if the series cannot be cast to a string series
      */
-    default StringSeries getStringSeries(final int index) throws DataSeriesCastException {
+    default StringSeries getStringSeries(final int index) throws SeriesCastException {
         return get(index).asString();
     }
 
@@ -300,7 +304,7 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      * @return an iterator over the names of the series
      */
     @Override
-    default Iterator<DataSeries<?>> iterator() {
+    default Iterator<Series<Comparable<Object>>> iterator() {
         return new Iterator<>() {
             private int i = 0;
 
@@ -310,7 +314,7 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
             }
 
             @Override
-            public DataSeries<?> next() {
+            public Series<Comparable<Object>> next() {
                 return get(i++);
             }
         };
@@ -323,7 +327,8 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
      * @param series the array of series
      * @return a dataset wrapping the series
      */
-    static DataFrame from(final String name, DataSeries<?>... series) {
+    @SafeVarargs
+    static <S extends Comparable<S>, T extends Series<? extends S>> DataFrame from(final String name, T... series) {
         return new DataFrameImpl.OfArray(name, series);
     }
 
@@ -373,6 +378,7 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
         return new DataFrameImporter.FromFile(source, separator, quoteCharacter, charset, false).build();
     }
 
+
     /**
      * Create a dataset from a file, skipping the import phase. Uses the defaults as described in
      * {@link #importer(File, char, char, Charset)}
@@ -392,5 +398,9 @@ public interface DataFrame extends Iterable<DataSeries<?>> {
         }
     }
 
+    //TODO
+    static DataFrameImporter clipboardImport(char separator, char quoteCharacter, Charset charset) throws IOException, UnsupportedFlavorException {
+        return new DataFrameImporter.FromString(getStringFromClipboard(), separator, quoteCharacter, charset, true);
+    }
 
 }

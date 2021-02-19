@@ -11,7 +11,7 @@ import java.util.function.IntToDoubleFunction;
 /**
  * A series of values
  */
-public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
+public interface Series<T> extends Iterable<T> {
     /**
      * Get the value at a specific index
      *
@@ -29,6 +29,8 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @return the size of the series
      */
     int size();
+
+    int getID(int index);
 
     /**
      * @return the name of the series
@@ -60,15 +62,15 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
     default StringSeries asString() {
         switch (getType()) {
             case STRING:
-                return (StringSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.StringSeriesView((SeriesImpl.SeriesView<String>) this) : (StringSeries) this;
             case BOOLEAN:
-                return new DataSeriesImpl.OfStringArray(this, el -> DataType.toString((Boolean) el));
+                return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Boolean) el));
             case LONG:
-                return new DataSeriesImpl.OfStringArray(this, el -> DataType.toString((Long) el));
+                return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Long) el));
             case DOUBLE:
-                return new DataSeriesImpl.OfStringArray(this, el -> DataType.toString((Double) el));
+                return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Double) el));
             default:
-                throw new DataSeriesCastException();
+                throw new SeriesCastException();
         }
     }
 
@@ -76,15 +78,15 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
     default DoubleSeries asDouble() {
         switch (getType()) {
             case DOUBLE:
-                return (DoubleSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.DoubleSeriesView((SeriesImpl.SeriesView<Double>) this) : (DoubleSeries) this;
             case BOOLEAN:
-                return new DataSeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((Boolean) el));
+                return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((Boolean) el));
             case LONG:
-                return new DataSeriesImpl.OfDoubleArray((LongSeries) this, DataType::toDouble);
+                return new SeriesImpl.OfDoubleArray((LongSeries) this, DataType::toDouble);
             case STRING:
-                return new DataSeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((String) el));
+                return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((String) el));
             default:
-                throw new DataSeriesCastException();
+                throw new SeriesCastException();
         }
     }
 
@@ -92,15 +94,15 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
     default LongSeries asLong() {
         switch (getType()) {
             case LONG:
-                return (LongSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.LongSeriesView((SeriesImpl.SeriesView<Long>)this) : (LongSeries) this;
             case DOUBLE:
-                return new DataSeriesImpl.OfLongArray(this, el -> DataType.toLong((Double) el), v -> !Double.isNaN((Double) v));
+                return new SeriesImpl.OfLongArray(this, el -> DataType.toLong((Double) el), v -> !Double.isNaN((Double) v));
             case BOOLEAN:
-                return new DataSeriesImpl.OfNonNaNLongArray(this, el -> DataType.toLong((Boolean) el));
+                return new SeriesImpl.OfNonNaNLongArray(this, el -> DataType.toLong((Boolean) el));
             case STRING:
-                return new DataSeriesImpl.OfLongArray(this, el -> DataType.toLong((String) el), v -> DataType.LONG.matches((String) v));
+                return new SeriesImpl.OfLongArray(this, el -> DataType.toLong((String) el), v -> DataType.LONG.matches((String) v));
             default:
-                throw new DataSeriesCastException();
+                throw new SeriesCastException();
         }
     }
 
@@ -108,15 +110,15 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
     default BooleanSeries asBoolean() {
         switch (getType()) {
             case BOOLEAN:
-                return (BooleanSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.BooleanSeriesView((SeriesImpl.SeriesView<Boolean>) this) : (BooleanSeries) this;
             case STRING:
-                return new DataSeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((String) el));
+                return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((String) el));
             case LONG:
-                return new DataSeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((Long) el));
+                return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((Long) el));
             case DOUBLE:
-                return new DataSeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((Double) el));
+                return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((Double) el));
             default:
-                throw new DataSeriesCastException();
+                throw new SeriesCastException();
         }
     }
 
@@ -188,7 +190,7 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @return a string series of the values
      */
     static StringSeries of(final String name, final String... values) {
-        return new DataSeriesImpl.OfStringArray(name, values);
+        return new SeriesImpl.OfStringArray(name, values);
     }
 
     /**
@@ -199,7 +201,7 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @return the default series wrapping the data
      */
     static DoubleSeries of(final String name, double... data) {
-        return new DataSeriesImpl.OfDoubleArray(name, data);
+        return new SeriesImpl.OfDoubleArray(name, data);
     }
 
     /**
@@ -210,7 +212,7 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @return the default series wrapping the data
      */
     static LongSeries of(final String name, long... data) {
-        return new DataSeriesImpl.OfNonNaNLongArray(name, data);
+        return new SeriesImpl.OfNonNaNLongArray(name, data);
     }
 
     /**
@@ -224,7 +226,7 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @return a series from a collection of objects
      */
     static DoubleSeries of(final String name, int size, IntToDoubleFunction dataGetter) {
-        return new DataSeriesImpl.OfFunctionalDouble(name, size, dataGetter);
+        return new SeriesImpl.OfFunctionalDouble(name, size, dataGetter);
     }
 
     /**
@@ -234,7 +236,7 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @param end   the end index (exclusive)
      * @return a sliced view into this data series
      */
-    DataSeries<T> subset(int start, int end);
+    Series<T> subset(int start, int end);
 
     /**
      * Get the first n elements
@@ -242,14 +244,14 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @param n the number of elements
      * @return a sliced view into this data series
      */
-    default DataSeries<T> head(int n) {
+    default Series<T> head(int n) {
         return subset(0, n);
     }
 
     /**
      * @return a sliced view of the first 5 elements in the series
      */
-    default DataSeries<T> head() {
+    default Series<T> head() {
         return head(5);
     }
 
@@ -259,14 +261,14 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @param n the number of elements
      * @return a sliced view into this data series
      */
-    default DataSeries<T> tail(int n) {
+    default Series<T> tail(int n) {
         return subset(size() - n, size());
     }
 
     /**
      * @return a sliced view of the last 5 elements in the series
      */
-    default DataSeries<T> tail() {
+    default Series<T> tail() {
         return tail(5);
     }
 
@@ -276,25 +278,25 @@ public interface DataSeries<T extends Comparable<T>> extends Iterable<T> {
      * @param test the test on the indices
      * @return a sliced view of this series based on the test
      */
-    DataSeries<T> subset(IntPredicate test);
+    Series<T> subset(IntPredicate test);
 
-    static boolean isNumericSeries(DataSeries<?> series) {
+    static boolean isNumericSeries(Series<?> series) {
         return DataType.isNumeric(series.getType());
     }
 
-    static boolean isDoubleSeries(DataSeries<?> series) {
+    static boolean isDoubleSeries(Series<?> series) {
         return series.getType() == DataType.DOUBLE;
     }
 
-    static boolean isStringSeries(DataSeries<?> series) {
+    static boolean isStringSeries(Series<?> series) {
         return series.getType() == DataType.STRING;
     }
 
-    static boolean isLongSeries(DataSeries<?> series) {
+    static boolean isLongSeries(Series<?> series) {
         return series.getType() == DataType.LONG;
     }
 
-    static boolean isBooleanSeries(DataSeries<?> series) {
+    static boolean isBooleanSeries(Series<?> series) {
         return series.getType() == DataType.BOOLEAN;
     }
 }

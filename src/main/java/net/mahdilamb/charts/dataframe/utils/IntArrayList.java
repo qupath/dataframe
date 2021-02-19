@@ -45,9 +45,7 @@ public final class IntArrayList implements Iterable<Integer> {
      * @param index the index to add to
      */
     public void add(int value, int index) {
-        if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException();
-        }
+        checkRange(index);
         if (size == arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
         }
@@ -71,6 +69,25 @@ public final class IntArrayList implements Iterable<Integer> {
             result = 31 * result + arr[i];
         }
         return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof IntArrayList)) {
+            return false;
+        }
+        if (((IntArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((IntArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -156,9 +173,7 @@ public final class IntArrayList implements Iterable<Integer> {
      * @return the value at the index
      */
     public int get(int index) {
-        if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException();
-        }
+        checkRange(index);
         return arr[index];
     }
 
@@ -174,6 +189,12 @@ public final class IntArrayList implements Iterable<Integer> {
      */
     public void clear() {
         size = 0;
+    }
+
+    private void checkRange(int index) {
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException();
+        }
     }
 
     @Override

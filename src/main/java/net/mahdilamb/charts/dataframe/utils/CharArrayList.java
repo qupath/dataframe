@@ -73,6 +73,25 @@ public final class CharArrayList implements Iterable<Character> {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof CharArrayList)) {
+            return false;
+        }
+        if (((CharArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((CharArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public String toString() {
         if (size == 0) {
             return "[]";

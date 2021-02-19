@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.Scanner;
 
 import static net.mahdilamb.charts.dataframe.DataType.STRING;
-import static net.mahdilamb.charts.dataframe.utils.StringUtils.LINE_PATTERN;
 import static net.mahdilamb.charts.dataframe.utils.StringUtils.iterateLine;
+import static net.mahdilamb.charts.dataframe.utils.StringUtils.linePattern;
 
 
 /**
@@ -43,6 +43,14 @@ public abstract class DataFrameImporter {
         return this;
     }
 
+    static int TEST_LINES = 20;
+    String[] putativeHeader;
+    protected String[] previewLines;
+
+    char separator;
+    Charset charset;
+    char quoteCharacter;
+
     /**
      * Fields that should be calculated in the initial read
      */
@@ -60,36 +68,11 @@ public abstract class DataFrameImporter {
 
     }
 
-    //TODO allow creating from string or clipboard
-    static final class FromString extends DataFrameImporter {
-        private final String source;
-
-        FromString(final String source) {
-            this.source = source;
-        }
-
-        @Override
-        protected void preparePreview() {
-            //TODO
-        }
-
-        @Override
-        public DataFrame build() {
-            //TODO
-            return null;
-        }
-    }
-
     //TODO allow changing whether it has header or not
     //TODO skiprows, skipcols, last row, lastcol
     static final class FromFile extends DataFrameImporter {
-        static int TEST_LINES = 20;
+
         final File source;
-        final char separator;
-        final Charset charset;
-        final char quoteCharacter;
-        String[] putativeHeader;
-        private String[] previewLines;
 
         FromFile(final File source, char separator, char quoteCharacter, Charset charset, boolean storePreview) {
             this.source = source;
@@ -174,6 +157,7 @@ public abstract class DataFrameImporter {
                             for (final DataType t : seriesTypes) {
                                 if (t.matches(str)) {
                                     typeCounts[currentO * seriesTypes.length + b] += 1;
+                                    //todo check we have enough counts
                                 }
                                 ++b;
                             }
@@ -203,7 +187,7 @@ public abstract class DataFrameImporter {
                     types[i] = favored;
                 }
                 guessHasColumnNames();
-                while (scanner.findWithinHorizon(LINE_PATTERN, 0) != null) {
+                while (scanner.findWithinHorizon(linePattern, 0) != null) {
                     numLines++;
                 }
 
@@ -212,79 +196,144 @@ public abstract class DataFrameImporter {
             }
         }
 
-        private void guessHasColumnNames() {
-            hasColumnNames = false;
-            for (int i = 0; i < numColumns; ++i) {
-                if (types[i] != STRING && !types[i].matches(putativeHeader[i])) {
-                    hasColumnNames = true;
-                    break;
-                }
-            }
-        }
-
-        private boolean isQuote(char c) {
-            return c == quoteCharacter;
-        }
-
-        private boolean isSeparator(char c) {
-            return c == separator;
-        }
-
         @Override
         public String toString() {
             return String.format("DatasetImporter {file: '%s'}", source);
         }
 
         @Override
-        protected void preparePreview() {
-            //TODO move header down to series if no column names
-            int rows = Math.min(TEST_LINES, numLines - 1);
-            final String[][] data = new String[numColumns][rows];
+        public DataFrame build() {
+            return new DataFrameImpl.FromFile(this);
+        }
 
-            for (int i = 0; i < numColumns; ++i) {
-                data[i] = new String[rows];
+        @Override
+        protected String getName() {
+            return source.getName();
+        }
+    }
+
+    protected abstract String getName();
+
+    protected boolean isQuote(char c) {
+        return c == quoteCharacter;
+    }
+
+    protected boolean isSeparator(char c) {
+        return c == separator;
+    }
+
+    protected void guessHasColumnNames() {
+        hasColumnNames = false;
+        for (int i = 0; i < numColumns; ++i) {
+            if (types[i] != STRING && !types[i].matches(putativeHeader[i])) {
+                hasColumnNames = true;
+                break;
             }
-            for (int i = 0; i < rows; ++i) {
-                final String line = previewLines[i];
-                int h = 0, o = 0;
-                while (h < line.length()) {
-                    int col = o;
-                    int row = i;
-                    h = iterateLine(line, h, separator, quoteCharacter, str -> data[col][row] = str);
-                    ++o;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <S extends Comparable<S>, T extends Series<? extends S>>void preparePreview() {
+        //TODO move header down to series if no column names
+        int rows = Math.min(TEST_LINES, numLines - 1);
+        final String[][] data = new String[numColumns][rows];
+
+        for (int i = 0; i < numColumns; ++i) {
+            data[i] = new String[rows];
+        }
+        for (int i = 0; i < rows; ++i) {
+            final String line = previewLines[i];
+            int h = 0, o = 0;
+            while (h < line.length()) {
+                int col = o;
+                int row = i;
+                h = iterateLine(line, h, separator, quoteCharacter, str -> data[col][row] = str);
+                ++o;
+            }
+        }
+
+        final T[] series = (T[]) new Series[numColumns];
+
+        for (int i = 0; i < numColumns; ++i) {
+            switch (types[i]) {
+                case LONG:
+                    series[i] = (T) new SeriesImpl.OfStringToLongArray(putativeHeader[i], data[i]);
+                    break;
+                case DOUBLE:
+                    series[i] = (T) new SeriesImpl.OfStringToDoubleArray(putativeHeader[i], data[i]);
+                    break;
+                case BOOLEAN:
+                    series[i] = (T) new SeriesImpl.OfStringToBooleanArray(putativeHeader[i], data[i]);
+                    break;
+                case STRING:
+                    series[i] = (T) new SeriesImpl.OfStringArray(putativeHeader[i], data[i]);
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        }
+        currentPreview = new DataFrameImpl.OfArray(getName(), series);
+
+
+    }
+
+    //TODO
+    public static class FromString extends DataFrameImporter {
+        final String source;
+
+        static boolean isEOL(final Character c) {
+            int i = 0;
+            while (i < linePattern.length()) {
+                if (linePattern.charAt(i++) == c) {
+                    return true;
                 }
             }
+            return false;
+        }
 
-            final DataSeries<?>[] series = new DataSeries[numColumns];
-
-            for (int i = 0; i < numColumns; ++i) {
-                switch (types[i]) {
-                    case LONG:
-                        series[i] = new DataSeriesImpl.OfStringToLongArray(putativeHeader[i], data[i]);
-                        break;
-                    case DOUBLE:
-                        series[i] = new DataSeriesImpl.OfStringToDoubleArray(putativeHeader[i], data[i]);
-                        break;
-                    case BOOLEAN:
-                        series[i] = new DataSeriesImpl.OfStringToBooleanArray(putativeHeader[i], data[i]);
-                        break;
-                    case STRING:
-                        series[i] = new DataSeriesImpl.OfStringArray(putativeHeader[i], data[i]);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException();
-                }
+        private void forLine(final String line, int scanCount, boolean storePreview, DataType[] seriesTypes, int[] typeCounts) {
+            int h = 0, o = 0;
+            while (h < line.length()) {
+                int currentO = o;
+                h = iterateLine(line, h, separator, quoteCharacter, str -> {
+                    int b = 0;
+                    for (final DataType t : seriesTypes) {
+                        if (t.matches(str)) {
+                            typeCounts[currentO * seriesTypes.length + b] += 1;
+                            //todo check we have enough counts
+                        }
+                        ++b;
+                    }
+                });
+                ++o;
             }
-            currentPreview = new DataFrameImpl.OfArray(source.getName(), series);
+
+        }
+
+
+        public FromString(final String source, char separator, char quoteCharacter, Charset charset, boolean storePreview) {
+            this.source = source;
+            this.separator = separator;
+            this.quoteCharacter = quoteCharacter;
+            this.charset = charset;
+            numLines = 1;
 
         }
 
         @Override
         public DataFrame build() {
-            return new DataFrameImpl.FromFile(this);
+            //TODO
+            return null;
+        }
+
+        @Override
+        protected String getName() {
+            return "{Imported from clipboard}";
+        }
+
+        @Override
+        protected void preparePreview() {
+            //TODO
         }
     }
-
-    protected abstract void preparePreview();
-
 }

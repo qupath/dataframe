@@ -5,7 +5,7 @@ package net.mahdilamb.charts.dataframe;
  *
  * @param <T> the type of the data in the series
  */
-interface NumericSeries<T extends Number & Comparable<T>> extends DataSeries<T>, SeriesWithFunctionalOperators<T> {
+interface NumericSeries<T extends Number & Comparable<T>> extends Series<T>, SeriesWithFunctionalOperators<T> {
     /**
      * Returns whether the value at the index is NaN
      *

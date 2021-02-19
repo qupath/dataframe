@@ -26,7 +26,7 @@ public final class StringRepetition implements Iterable<String> {
      * @return a string series from the repeats
      */
     public static StringSeries group(String name, StringRepetition... repetition) {
-        return new DataSeriesImpl.RepeatedString(name, repetition);
+        return new SeriesImpl.RepeatedString(name, repetition);
     }
 
     final String data;

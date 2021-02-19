@@ -82,7 +82,24 @@ public final class DoubleArrayList implements Iterable<Double> {
         }
         return result;
     }
-
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof DoubleArrayList)) {
+            return false;
+        }
+        if (((DoubleArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((DoubleArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
     @Override
     public String toString() {
         if (size == 0) {

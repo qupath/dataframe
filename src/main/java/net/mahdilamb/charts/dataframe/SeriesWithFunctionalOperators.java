@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * @implNote These have been abstracted away as getting a series via dataset will
  * not work for {@link DataFrame#get} as the compiler will not be able to get the type
  */
-interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends DataSeries<T> {
+interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<T> {
     /**
      * Convert each element to a boolean based on the test
      *
@@ -24,7 +24,7 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends DataSer
      * @return a new boolean series produced from using the predicate on every element
      */
     default BooleanSeries map(Predicate<T> converter) {
-        return new DataSeriesImpl.OfBooleanArray(this, converter);
+        return new SeriesImpl.OfBooleanArray(this, converter);
     }
 
     /**
@@ -39,6 +39,8 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends DataSer
     default BooleanSeries eq(T other) {
         return map(el -> Objects.equals(other, el));
     }
+
+    Series<T> filter(BooleanSeries filter);
 
     /**
      * Reduce the series to a single double value

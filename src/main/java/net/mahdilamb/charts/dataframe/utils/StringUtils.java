@@ -1,13 +1,14 @@
 package net.mahdilamb.charts.dataframe.utils;
 
 
-import net.mahdilamb.utils.functions.AndBiIntFunction;
 import net.mahdilamb.utils.functions.CharacterPredicate;
 
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -18,7 +19,15 @@ public final class StringUtils {
 
     }
 
-    public static final String EMPTY_STRING = "";
+    /**
+     * Powers of 10 that fit into integer range
+     */
+    private static final int[] POWERS_OF_10 = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+
+    /**
+     * Regex pattern
+     */
+    public static final String intPattern = "(?:-[1-9]|-214748364[0-8]|-?[1-9]\\d{1,8}|-?1\\d{9}|-?20\\d{8}|-?21[0-3]\\d{7}|-?214[0-6]\\d{6}|-?2147[0-3]\\d{5}|-?21474[0-7]\\d{4}|-?214748[0-2]\\d{3}|-?2147483[0-5]\\d{2}|-?21474836[0-3]\\d|\\d|214748364[0-7])";
 
     /**
      * Floating point pattern that allows for strings that can be parsed by  {@link Double#parseDouble}, but excludes
@@ -42,7 +51,7 @@ public final class StringUtils {
      * Regex pattern for a line with a terminator
      * Copied from JDK
      */
-    public static final String LINE_PATTERN = ".*(\r\n|[\n\r\u2028\u2029\u0085])|.+$";
+    public static final String linePattern = ".*(\r\n|[\n\r\u2028\u2029\u0085])|.+$";
     /**
      * The compiled pattern for {@link #fpPatternWithoutHex}
      */
@@ -55,10 +64,20 @@ public final class StringUtils {
      * The compiled pattern for {@link #longPattern}
      */
     public final static Pattern LONG_PATTERN = Pattern.compile(longPattern);
+
+    /**
+     * Regex pattern to search if a number is in the range of an int
+     */
+    public final static Pattern INT_PATTERN = Pattern.compile(intPattern);
+
     /**
      * The compiled pattern for {@link #boolPattern}
      */
     public final static Pattern BOOLEAN_PATTERN = Pattern.compile(boolPattern);
+    /**
+     * Regex patter to test for a line
+     */
+    public final static Pattern LINE_PATTERN = Pattern.compile(linePattern);
 
     /**
      * Return the last n characters of a string. The number is defined by the length of the output array
@@ -120,20 +139,15 @@ public final class StringUtils {
         int f;
         if (e == line.length()) {
             f = line.length() - 1;
-
-            //one column
-            if (s == 0) {
-                if (line.charAt(0) == line.charAt(f) && line.charAt(f) == quoteChar) {
-                    s = 1;
-                } else {
-                    f = line.length();
-                }
-            } else {
-                if (line.charAt(s) == line.charAt(f) && line.charAt(f) == quoteChar) {
-                    ++s;
+            if (line.charAt(s) == line.charAt(f) && line.charAt(f) == quoteChar) {
+                if (s != 0) {
                     --f;
                 }
+                ++s;
+            } else {
+                f = line.length();
             }
+
         } else {
             f = e - 2;
             if (line.charAt(s) == line.charAt(f) && line.charAt(s) == quoteChar) {
@@ -205,120 +219,62 @@ public final class StringUtils {
     }
 
     /**
-     * Test if a comparator is correct
+     * Use AWT to get the string from the clipboard
      *
-     * @param eq      whether to test for equality
-     * @param lt      whether to test for less than
-     * @param gt      whether to test for greater than
-     * @param ne      whether to test for not equals
-     * @param compare the int from compilation
-     * @return whether the comparison fits the tests
+     * @return the string data from the clipboard
+     * @throws IOException                if the data cannot be retrieved
+     * @throws UnsupportedFlavorException if the clipboard does not contain a string
      */
-    private static boolean toBoolean(boolean eq, boolean lt, boolean gt, boolean ne, int compare) {
-        return ne ? compare != 0 : ((eq && compare == 0) || (lt && compare < 0 || gt && compare > 0));
+    public static String getStringFromClipboard() throws IOException, UnsupportedFlavorException {
+        return (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+    }
+
+    static boolean isDigit(final char c) {
+        return c >= '0' && c <= '9';
     }
 
     /**
-     * Convert a string into a functional operator
+     * Test if a string containing a number can be converted to an int without a regular exception.
      *
-     * @param string       the string to convert
-     * @param rhsConverter the function used to convert the right hand operand into the the correct type for comparison
-     * @param <T>          the type of the value to use in the comparison
-     * @return a predicate representation of the input string
+     * @param number the number to test
+     * @return whether the number can be converted to an int. Also returns false if the string is not a number
      */
-    public static <T extends Comparable<T>> Predicate<T> parseToPredicate(final String string, Function<String, T> rhsConverter) {
-        boolean[] legn = new boolean[4];
+    public static boolean canInt(final String number) {
         int i = 0;
-        int j = 0;
-        while (i < string.length() && j < 2) {
-            char c = string.charAt(i++);
-            if (c == '=' || c == '<' || c == '>' || c == '!') {
-                legn[1] |= c == '=';
-                legn[3] |= c == '!';
-                legn[2] |= c == '>';
-                legn[0] |= c == '<';
+        int e_i;
+        long sign = 1;
+        if (number.charAt(i) < '0') {
+            if (number.charAt(i) != '-' || number.charAt(i) == '+') {
+                return false;
+            }
+            sign = number.charAt(i) == '-' ? -1 : 1;
+            if (number.length() > 11) {
+                return false;
+            } else if (number.length() > 10 && isDigit(number.charAt(i)) && number.charAt(1) > '2') {
+                return false;
+            }
+            e_i = number.length() - 2;
+            ++i;
+        } else if (number.length() > 10 || number.length() > 9 && isDigit(number.charAt(i)) && number.charAt(1) > '2') {
+            return false;
+        } else {
+            e_i = number.length() - 1;
+        }
+        long out = 0;
 
-                if ((j == 1 && legn[1] && (c == '<' || c == '>'))) {
-                    throw new IllegalArgumentException("Could not parse - incorrect boolean operators");
-                }
-                ++j;
+        while (i < number.length()) {
+            char c = number.charAt(i++);
+            int j = c - '0';
+            if (j < 0 || j > 9) {
+                return false;
             }
-        }
-        if (i == string.length()) {
-            throw new IllegalArgumentException("Could not parse - no boolean operators found");
-        }
-        while (i < string.length()) {
-            if (!Character.isWhitespace(string.charAt(i++))) {
-                --i;
-                break;
-            }
-        }
-        j = i + 1;
-        while (j < string.length()) {
-            if (Character.isWhitespace(string.charAt(j++))) {
-                --j;
-                break;
-            }
-        }
-        if (i >= j) {
-            throw new IllegalArgumentException("Could not parse - no right hand arguments");
-        }
-        final T val = rhsConverter.apply(string.substring(i, j));
-        return t -> toBoolean(legn[1], legn[0], legn[2], legn[3], val.compareTo(t));
-    }
+            out += POWERS_OF_10[e_i--] * j * sign;
 
-
-    public static <T> T slice(AndBiIntFunction<T> object, String slice, int defaultEnd) {
-        if (slice.length() == 0) {
-            throw new IllegalArgumentException("slice must not be empty");
-        }
-        int start = 0, end = defaultEnd, lastColonPos = slice.length();
-        int i = slice.length();
-        int e = 1;
-        int j = 0;
-        int k = 0;
-        while (i > 0) {
-            final char c = slice.charAt(--i);
-            if (c == '-') {
-                if (k < 0) {
-                    throw new IllegalArgumentException("slice has two negatives");
-                }
-                k *= -1;
-                continue;
-            }
-            if (Character.isWhitespace(c)) {
-                throw new IllegalArgumentException("slice must not contain white space characters");
-            }
-            if (c == ':') {
-                e = 1;
-                lastColonPos = i;
-                if (j == 0) {
-                    end = k;
-                    k = 0;
-                } else {
-                    end = defaultEnd;
-                }
-                ++j;
-                if (j >= 2) {
-                    throw new IllegalArgumentException("Only start and end supported");
-                }
-            }
-            if (Character.isDigit(c)) {
-                k += e * Character.getNumericValue(c);
-                e *= 10;
+            if (out > Integer.MAX_VALUE || out < Integer.MIN_VALUE) {
+                return false;
             }
         }
-        if (lastColonPos != 0 && j != 0) {
-            start = k;
-        }
-        if (j == 0) {
-            start = k;
-            end = k + 1;
-        }
-        if (start >= end) {
-            return object.apply(0, 0);
-        }
-        return object.apply(start < 0 ? (defaultEnd + start) : start, end < 0 ? (defaultEnd + end) : end);
+        return true;
     }
 
 }

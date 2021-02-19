@@ -2,16 +2,19 @@ package net.mahdilamb.charts.dataframe;
 
 
 import net.mahdilamb.charts.dataframe.utils.GroupBy;
+import net.mahdilamb.charts.dataframe.utils.IteratorUtils;
 import net.mahdilamb.charts.dataframe.utils.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Scanner;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static net.mahdilamb.charts.dataframe.DataType.*;
 import static net.mahdilamb.charts.dataframe.utils.StringUtils.iterateLine;
@@ -22,6 +25,35 @@ import static net.mahdilamb.charts.dataframe.utils.StringUtils.iterateLine;
 //TODO use correct id column
 //todo check formatting when number of rows equals MAX_ROWS
 abstract class DataFrameImpl implements DataFrame {
+
+    /**
+     * The prefix to use for unnamed columns
+     */
+    static String EMPTY_COLUMN_PREFIX = "Col$";
+    /**
+     * The maximum number of rows to display in the {@link #toString()} method
+     */
+    static int MAX_DISPLAY_ROWS = 25;
+    /**
+     * The maximum number of columns to display in the {@link #toString()} method
+     */
+    static int MAX_DISPLAY_COLUMNS = 11;
+    /**
+     * The minimum width of a row when printing
+     */
+    static int MIN_WIDTH = 4;
+    /**
+     * The maximum width of a row when printing
+     */
+    static int MAX_WIDTH = 12;
+    /**
+     * The string used to separate columns
+     */
+    static String COLUMN_SEPARATOR = "  ";
+
+    static String SKIP_ROWS = "...";
+    static String SKIP_COLUMNS = "...";
+
     public static final class DataFrameGroupBy {
         public int column;
         private DataFrame dataFrame;
@@ -51,40 +83,12 @@ abstract class DataFrameImpl implements DataFrame {
 
     }
 
-    /**
-     * The prefix to use for unnamed columns
-     */
-    static String EMPTY_COLUMN_PREFIX = "Col.";
-    /**
-     * The maximum number of rows to display in the {@link #toString()} method
-     */
-    static int MAX_DISPLAY_ROWS = 10;
-    /**
-     * The maximum number of columns to display in the {@link #toString()} method
-     */
-    static int MAX_DISPLAY_COLUMNS = 10;
-    /**
-     * The minimum width of a row when printing
-     */
-    static int MIN_WIDTH = 4;
-    /**
-     * The maximum width of a row when printing
-     */
-    static int MAX_WIDTH = 12;
-    /**
-     * The string used to separate columns
-     */
-    static String COLUMN_SEPARATOR = "  ";
-
-    static String SKIP_ROWS = "...";
-    static String SKIP_COLUMNS = "...";
-
     static final class DataFrameView extends DataFrameImpl {
-
+        //todo hashmap series names
         private final DataFrame dataFrame;
-        int numSeries;
+        int numSeries = -1;
         int[] seriesIDs;
-        DataSeries<?>[] series;
+        Series<?>[] series;
         int[] rows;
         int numRows = -1;
 
@@ -93,6 +97,23 @@ abstract class DataFrameImpl implements DataFrame {
             this.dataFrame = extract(dataFrame);
             this.numSeries = ids.length;
             seriesIDs = ids;
+        }
+
+        public DataFrameView(DataFrame dataFrame, int[] cols, int numCols, int[] rows, int numRows) {
+            super(dataFrame.getName());
+            this.dataFrame = extract(dataFrame);
+            this.rows = rows;
+            this.numRows = numRows;
+            seriesIDs = cols;
+            this.numSeries = numCols;
+
+        }
+
+        public DataFrameView(DataFrame dataFrame, int[] rows, int numRows) {
+            super(dataFrame.getName());
+            this.dataFrame = extract(dataFrame);
+            this.rows = rows;
+            this.numRows = numRows;
         }
 
         public DataFrameView(DataFrame dataFrame, IntPredicate test) {
@@ -137,21 +158,57 @@ abstract class DataFrameImpl implements DataFrame {
         }
 
         @Override
-        public DataSeries<?> get(int series) {
-            if (this.series == null) {
+        @SuppressWarnings("unchecked")
+        public Series<Comparable<Object>> get(int series) {
+            if (numRows == -1 && numSeries == -1) {
                 return dataFrame.get(series);
+
+            } else {
+                if (this.series == null) {
+                    this.series = new Series[dataFrame.numSeries()];
+                }
+                if (this.series[series] == null) {
+                    if (rows != null) {
+                        switch (dataFrame.get(series).getType()) {
+                            case STRING:
+                                this.series[series] = new SeriesImpl.SeriesView<>(dataFrame.getStringSeries(series), rows, numRows);
+                                break;
+                            case LONG:
+                                this.series[series] = new SeriesImpl.SeriesView<>(dataFrame.getLongSeries(series), rows, numRows);
+                                break;
+                            case DOUBLE:
+                                this.series[series] = new SeriesImpl.SeriesView<>(dataFrame.getDoubleSeries(series), rows, numRows);
+                                break;
+                            case BOOLEAN:
+                                this.series[series] = new SeriesImpl.SeriesView<>(dataFrame.getBooleanSeries(series), rows, numRows);
+                                break;
+                            default:
+                                throw new UnsupportedOperationException();
+                        }
+                    } else {
+                        this.series[series] = dataFrame.get(series);
+                    }
+                }
+                //todo bounds checking incorporating what is visible
+                return (Series<Comparable<Object>>) this.series[series];
             }
-            if (this.series[series] == null) {
-                this.series[series] = new DataSeriesImpl.DataSeriesView<>(dataFrame.get(series), rows);
-            }
-            //todo bounds checking incorporating what is visible
-            return this.series[series];
         }
 
 
         @Override
         public int numSeries() {
-            return numSeries;
+            return numSeries == -1 ? dataFrame.numSeries() : numSeries;
+        }
+
+        @Override
+        public int size(Axis axis) {
+            switch (axis) {
+                case COLUMN:
+                    return numSeries();
+                case INDEX:
+                default:
+                    return numSeries() == 0 ? 0 : (numRows != -1 ? numRows : get(0).size());
+            }
         }
     }
 
@@ -160,7 +217,8 @@ abstract class DataFrameImpl implements DataFrame {
      * Dataset from an array of series
      */
     static final class OfArray extends DataFrameImpl {
-        private final DataSeries<?>[] series;
+        private final Series<?>[] series;
+        private HashMap<String, Series<?>> seriesMap;
 
         /**
          * Create a dataset from an array of series
@@ -168,13 +226,14 @@ abstract class DataFrameImpl implements DataFrame {
          * @param name   the name of the dataset
          * @param series the array of series
          */
-        OfArray(final String name, final DataSeries<?>... series) {
+        @SuppressWarnings("unchecked")
+        <S extends Comparable<S>, T extends Series<? extends S>> OfArray(final String name, final T[] series) {
             super(name);
-            this.series = new DataSeries[series.length];
+            this.series = new Series[series.length];
             int size = -1;
             int i = 0;
-            for (DataSeries<?> s : series) {
-                this.series[i++] = (s.getClass() == DataSeriesImpl.DataSeriesView.class) ? ((DataSeriesImpl.DataSeriesView<?>) s).dataSeries : s;
+            for (T s : series) {
+                this.series[i++] = s.getClass() == SeriesImpl.SeriesView.class ? ((SeriesImpl.SeriesView<S>) s).dataSeries : s;
                 if (size == -1) {
                     size = s.size();
                     continue;
@@ -186,8 +245,21 @@ abstract class DataFrameImpl implements DataFrame {
         }
 
         @Override
-        public DataSeries<?> get(int series) {
-            return this.series[series];
+        @SuppressWarnings("unchecked")
+        public Series<Comparable<Object>> get(String name) {
+            if (seriesMap == null) {
+                seriesMap = new HashMap<>(series.length);
+                for (Series<?> s : series) {
+                    seriesMap.put(s.getName(), s);
+                }
+            }
+            return (Series<Comparable<Object>>) seriesMap.get(name);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Series<Comparable<Object>> get(int series) {
+            return (Series<Comparable<Object>>) this.series[series];
         }
 
         @Override
@@ -217,7 +289,8 @@ abstract class DataFrameImpl implements DataFrame {
      * Implementation of a dataset created from a file
      */
     static final class FromFile extends DataFrameImpl {
-        private final DataSeries<?>[] series;
+        private final Series<?>[] series;
+        private HashMap<String, Series<Comparable<Object>>> seriesMap;
 
         FromFile(DataFrameImporter.FromFile importer) {
             this(importer.source, importer.separator, importer.quoteCharacter, importer.charset, importer.putativeHeader, importer.types, importer.hasColumnNames, importer.numColumns, (importer.hasColumnNames ? -1 : 0) + importer.numLines);
@@ -225,22 +298,22 @@ abstract class DataFrameImpl implements DataFrame {
 
         FromFile(File name, char separator, char quoteCharacter, Charset charset, String[] columnNames, DataType[] types, boolean hasColumnNames, int numColumns, int numRows) {
             super(name.getName());
-            this.series = new DataSeries[numColumns];
+            this.series = new Series[numColumns];
             boolean getColumnNames = columnNames == null && hasColumnNames;
             for (int i = 0; i < numColumns; ++i) {
                 final String columnName = columnNames == null ? (hasColumnNames ? (EMPTY_COLUMN_PREFIX + i) : null) : columnNames[i] == null ? EMPTY_COLUMN_PREFIX + i : columnNames[i];
                 switch (types[i]) {
                     case LONG:
-                        series[i] = new DataSeriesImpl.OfLongArray(columnName, new long[numRows], new int[4], 0);
+                        series[i] = new SeriesImpl.OfLongArray(columnName, new Long[numRows]);
                         break;
                     case DOUBLE:
-                        series[i] = new DataSeriesImpl.OfDoubleArray(columnName, new double[numRows]);
+                        series[i] = new SeriesImpl.OfDoubleArray(columnName, new double[numRows]);
                         break;
                     case BOOLEAN:
-                        series[i] = new DataSeriesImpl.OfBooleanArray(columnName, new boolean[numRows]);
+                        series[i] = new SeriesImpl.OfBooleanArray(columnName, new boolean[numRows]);
                         break;
                     case STRING:
-                        series[i] = new DataSeriesImpl.OfStringArray(columnName, new String[numRows]);
+                        series[i] = new SeriesImpl.OfStringArray(columnName, new String[numRows]);
                         break;
                     default:
                         throw new UnsupportedOperationException();
@@ -266,25 +339,19 @@ abstract class DataFrameImpl implements DataFrame {
                         h = iterateLine(line, h, separator, quoteCharacter, str -> {
                             switch (types[currentO]) {
                                 case LONG:
-                                    final DataSeriesImpl.OfLongArray s = (DataSeriesImpl.OfLongArray) series[currentO];
+                                    final SeriesImpl.OfLongArray s = (SeriesImpl.OfLongArray) series[currentO];
                                     if (LONG.matches(str)) {
                                         s.data[row] = Long.parseLong(str);
-                                    } else {
-                                        s.data[row] = 0;
-                                        if (s.nanCount + 1 > s.isNaN.length) {
-                                            s.isNaN = Arrays.copyOf(s.isNaN, s.isNaN.length + 8);
-                                        }
-                                        s.isNaN[s.nanCount++] = row;
                                     }
                                     break;
                                 case DOUBLE:
-                                    ((DataSeriesImpl.OfDoubleArray) series[currentO]).data[row] = toDouble(str);
+                                    ((SeriesImpl.OfDoubleArray) series[currentO]).data[row] = toDouble(str);
                                     break;
                                 case BOOLEAN:
-                                    ((DataSeriesImpl.OfBooleanArray) series[currentO]).data[row] = toBoolean(str);
+                                    ((SeriesImpl.OfBooleanArray) series[currentO]).data[row] = toBoolean(str);
                                     break;
                                 case STRING:
-                                    ((DataSeriesImpl.OfStringArray) series[currentO]).data[row] = str;
+                                    ((SeriesImpl.OfStringArray) series[currentO]).data[row] = str;
                                     break;
                                 default:
                                     throw new UnsupportedOperationException();
@@ -297,18 +364,19 @@ abstract class DataFrameImpl implements DataFrame {
                 }
                 //update the size
                 for (int i = 0; i < numColumns; ++i) {
+
                     switch (types[i]) {
                         case LONG:
-                            ((DataSeriesImpl.OfLongArray) series[i]).end = rowCount;
+                            ((SeriesImpl.OfLongArray) series[i]).end = rowCount;
                             break;
                         case DOUBLE:
-                            ((DataSeriesImpl.OfDoubleArray) series[i]).end = rowCount;
+                            ((SeriesImpl.OfDoubleArray) series[i]).end = rowCount;
                             break;
                         case BOOLEAN:
-                            ((DataSeriesImpl.OfBooleanArray) series[i]).end = rowCount;
+                            ((SeriesImpl.OfBooleanArray) series[i]).end = rowCount;
                             break;
                         case STRING:
-                            ((DataSeriesImpl.OfStringArray) series[i]).end = rowCount;
+                            ((SeriesImpl.OfStringArray) series[i]).end = rowCount;
                             break;
                         default:
                             throw new UnsupportedOperationException();
@@ -321,8 +389,21 @@ abstract class DataFrameImpl implements DataFrame {
         }
 
         @Override
-        public DataSeries<?> get(int series) {
-            return this.series[series];
+        @SuppressWarnings("unchecked")
+        public Series<Comparable<Object>> get(String name) {
+            if (seriesMap == null) {
+                seriesMap = new HashMap<>(series.length);
+                for (Series<?> s : series) {
+                    seriesMap.put(s.getName(), (Series<Comparable<Object>>) s);
+                }
+            }
+            return seriesMap.get(name);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Series<Comparable<Object>> get(int series) {
+            return (Series<Comparable<Object>>) this.series[series];
         }
 
         @Override
@@ -338,14 +419,14 @@ abstract class DataFrameImpl implements DataFrame {
 
     @Override
     public String toString() {
-        int[] width = new int[numSeries()];
+        final int[] widths = new int[numSeries()];
         int rows = get(0).size();
         int halfRow = MAX_DISPLAY_ROWS >>> 1;
         int halfCols = MAX_DISPLAY_COLUMNS >>> 1;
 
         int rowStop = rows < MAX_DISPLAY_ROWS ? (rows >>> 1) : halfRow;
         int rowStart = rows < MAX_DISPLAY_ROWS ? rowStop : (rows - halfRow);
-        int idColWidth = String.valueOf(get(0).size()).length();
+        int idColWidth = IteratorUtils.skippedIterator(SKIP_ROWS.length(), (n, o) -> Math.max(n, (o != -1 ? String.valueOf(get(0).getID(o)) : SKIP_COLUMNS).length()), get(0).size(), MAX_DISPLAY_ROWS);
         final StringBuilder stringBuilder = new StringBuilder(StringUtils.repeatCharacter(' ', idColWidth)).append(COLUMN_SEPARATOR);
 
         int colStop = numSeries() < MAX_DISPLAY_COLUMNS ? (numSeries() >>> 1) : halfCols;
@@ -356,20 +437,11 @@ abstract class DataFrameImpl implements DataFrame {
                 i = colStart;
             }
             final String th = get(i).getName() == null ? (EMPTY_COLUMN_PREFIX + i) : get(i).getName();
-            if (th.length() < MIN_WIDTH) {
-                stringBuilder.append(StringUtils.repeatCharacter(' ', MIN_WIDTH - th.length())).append(th);
-                width[i] = MIN_WIDTH;
-            } else if (th.length() < MAX_WIDTH) {
-                stringBuilder.append(th);
-                width[i] = th.length();
-            } else {
-                if (th.length() == MAX_WIDTH) {
-                    stringBuilder.append(th);
-                } else {
-                    stringBuilder.append(th, 0, MAX_WIDTH - 3).append(SKIP_ROWS);
-                }
-                width[i] = MAX_WIDTH;
-            }
+            int finalI = i;
+            int maxWidth = Math.min(MAX_WIDTH, IteratorUtils.skippedIterator(th.length(), (n, o) -> Math.max(n, (o != -1 ? String.valueOf(get(finalI).get(o)) : SKIP_COLUMNS).length()), get(i).size(), MAX_DISPLAY_ROWS));
+            widths[i] = Math.max(maxWidth, MIN_WIDTH);
+
+            alignRight(stringBuilder, th, widths[i]);
             stringBuilder.append(COLUMN_SEPARATOR);
         }
         stringBuilder.delete(stringBuilder.length() - COLUMN_SEPARATOR.length(), stringBuilder.length()).append('\n');
@@ -382,35 +454,45 @@ abstract class DataFrameImpl implements DataFrame {
                         stringBuilder.append(SKIP_ROWS).append(COLUMN_SEPARATOR);
                         i = colStart;
                     }
-                    alignRight(stringBuilder, SKIP_COLUMNS, width[i]).append(COLUMN_SEPARATOR);
+                    alignRight(stringBuilder, SKIP_COLUMNS, widths[i]).append(COLUMN_SEPARATOR);
                 }
                 stringBuilder.delete(stringBuilder.length() - COLUMN_SEPARATOR.length(), stringBuilder.length()).append('\n');
                 j = rowStart;
             }
-            alignRight(stringBuilder, String.valueOf(j), idColWidth).append(COLUMN_SEPARATOR);
+
+            alignRight(stringBuilder, String.valueOf(get(0).getID(j)), idColWidth).append(COLUMN_SEPARATOR);
 
             for (int i = 0; i < colStop; ++i) {
-                alignRight(stringBuilder, i, j, width[i]).append(COLUMN_SEPARATOR);
+                alignRight(stringBuilder, i, j, widths[i]).append(COLUMN_SEPARATOR);
             }
             if (colStart != colStop) {
                 stringBuilder.append(SKIP_ROWS).append(COLUMN_SEPARATOR);
             }
 
             for (int i = colStart; i < numSeries(); ++i) {
-                alignRight(stringBuilder, i, j, width[i]).append(COLUMN_SEPARATOR);
+                alignRight(stringBuilder, i, j, widths[i]).append(COLUMN_SEPARATOR);
             }
             stringBuilder.delete(stringBuilder.length() - COLUMN_SEPARATOR.length(), stringBuilder.length()).append('\n');
         }
 
-        return stringBuilder.append(String.format("Dataset {name: \"%s\", cols: %d, rows: %d}\n", getName(), numSeries(), get(0).size())).toString();
+        return stringBuilder.append(String.format("Dataset {name: \"%s\", cols: %d, rows: %d}\n", getName(), numSeries(), size(Axis.INDEX))).toString();
     }
 
-    static StringBuilder alignRight(StringBuilder stringBuilder, final String td, int width) {
+    static StringBuilder alignRight(StringBuilder stringBuilder, final String td, int width, UnaryOperator<StringBuilder> trimmer) {
+
         if (td.length() < width) {
             return stringBuilder.append(StringUtils.repeatCharacter(' ', width - td.length())).append(td);
         } else {
-            return stringBuilder.append(td, 0, width);
+            if (td.length() == width) {
+                return stringBuilder.append(td, 0, width);
+            }
+
+            return trimmer.apply(stringBuilder);
         }
+    }
+
+    static StringBuilder alignRight(StringBuilder stringBuilder, final String td, int width) {
+        return alignRight(stringBuilder, td, width, sb -> sb.append(td, 0, width - 3).append("..."));
     }
 
     @SuppressWarnings("unchecked")
@@ -418,21 +500,30 @@ abstract class DataFrameImpl implements DataFrame {
         final String td;
         switch (get(col).getType()) {
             case LONG:
-                td = String.valueOf(((NumericSeries<Long>) get(col)).isNaN(row) ? "NaN" : ((NumericSeries<Long>) get(col)).get(row));
+                td = String.valueOf(get(col).get(row));
                 break;
             case DOUBLE:
-                td = String.valueOf(((NumericSeries<Double>) get(col)).get(row));
-                break;
+                double val = (getDoubleSeries(col)).get(row);
+                td = String.valueOf(val);
+                return alignRight(stringBuilder, td, width, sb -> formatDouble((val < 0 ? sb : sb.append(' ')), val, width));
             case BOOLEAN:
-                td = String.valueOf(((DataSeries<Boolean>) get(col)).get(row));
+                td = String.valueOf((getBooleanSeries(col)).get(row));
                 break;
             case STRING:
-                td = ((DataSeries<String>) get(col)).get(row);
+                td = getStringSeries(col).get(row);
                 break;
             default:
                 throw new UnsupportedOperationException();
         }
         return alignRight(stringBuilder, td, width);
+    }
+
+    private static StringBuilder formatDouble(final StringBuilder stringBuilder, double val, int width) {
+        final String v = String.valueOf(val);
+        if (v.indexOf('.') == -1) {
+            return stringBuilder.append(v);
+        }
+        return stringBuilder.append(String.format(String.format("%%.%df", (width - v.indexOf('.') - 2)), val));
     }
 
     @Override
@@ -451,22 +542,200 @@ abstract class DataFrameImpl implements DataFrame {
         }
         return out;
     }
-/*
+
     @Override
-    public DataFrameGroupBy groupBy(int column) {
-        if (groupBy == null || groupBy.column != column) {
-            groupBy = new DataFrameGroupBy(this, column);
+    public DataFrame filter(BooleanSeries filter) {
+        final int[] ids = new int[filter.size()];
+        int size = 0;
+        for (int i = 0; i < filter.size(); ++i) {
+            if (filter.get(i)) {
+                ids[size++] = get(0).getID(i);
+            }
         }
-        return groupBy;
+        return new DataFrameView(this, ids, size);
     }
-*/
+
+    static boolean isComparator(final char c) {
+        return c == '<' || c == '>' || c == '=' || c == '!';
+    }
+
+    @Override
+    //todo brackets, || and &&
+    public DataFrame query(String query) {
+        int nameStart = 0;
+        int nameEnd = -1;
+        int opStart = 0;
+        int opEnd = -1;
+        int valStart = 0;
+        int valEnd = -1;
+        int i = 0;
+        while (true) {
+            char c = query.charAt(i);
+            if (c != ' ') {
+                if (isComparator(c)) {
+                    opStart = i;
+                    opEnd = isComparator(query.charAt(i + 1)) ? i + 2 : i + 1;
+                    i = opEnd;
+                    continue;
+                } else if (c == '`') {
+                    if (nameEnd != -1) {
+                        throw new IllegalArgumentException();
+                    }
+                    nameStart = i + 1;
+                    nameEnd = nameStart;
+                    while (query.charAt(nameEnd) != '`') {
+                        nameEnd++;
+
+                    }
+                    i = nameEnd;
+                } else {
+                    //todo consider escape characters
+                    if (nameEnd != -1) {
+                        valStart = i;
+                        valEnd = valStart;
+                        while (query.charAt(valEnd) != ' ' && !isComparator(query.charAt(valEnd))) {
+                            valEnd++;
+                            if (valEnd == query.length()) {
+                                break;
+                            }
+                        }
+                        i = query.length();
+                    } else {
+                        nameStart = i;
+                        nameEnd = nameStart;
+                        while (query.charAt(nameEnd) != ' ' && !isComparator(query.charAt(nameEnd))) {
+                            nameEnd++;
+                        }
+                        i = nameEnd - 1;
+
+                    }
+                }
+            }
+            ++i;
+
+            if (i >= query.length()) {
+                final Series<?> series = get(query.substring(nameStart, nameEnd));
+                int len = opEnd - opStart;
+                switch (series.getType()) {
+                    case STRING:
+                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it);
+                    case BOOLEAN:
+                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toBoolean);
+                    case LONG:
+                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toLong);
+                    case DOUBLE:
+                        return doQuery(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toDouble);
+                    default:
+                        throw new UnsupportedOperationException();
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    static <U extends Comparable<U>> DataFrame doQuery(final DataFrame source, String query, int nameStart, int nameEnd, int opStart, int opEnd, int valStart, int valEnd, Function<String, U> converter) {
+        final String value = query.substring(valStart, valEnd);
+        final Series<?> series = source.get(query.substring(nameStart, nameEnd));
+        int len = opEnd - opStart;
+        switch (query.charAt(opStart)) {
+            case '<':
+            case '>':
+                if (len == 2) {
+                    if (query.charAt(opEnd-1) != '=') {
+                        throw new IllegalArgumentException();
+                    }
+                    if (query.charAt(opStart) == '<') {
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) <= 0);
+                    } else {
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) >= 0);
+                    }
+                } else if (len == 1) {
+                    if (query.charAt(opStart) == '<') {
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) < 0);
+                    } else {
+                        return source.filter(series.getName(), it -> ((U) it).compareTo(converter.apply(value)) > 0);
+                    }
+                } else {
+                    throw new IllegalArgumentException();
+                }
+            case '=':
+            case '!':
+                if (len != 2) {
+                    throw new IllegalArgumentException();
+                }
+                if (query.charAt(opStart) == '=') {
+                    return source.filter(series.getName(), it -> it.equals(converter.apply(value)));
+                } else {
+                    return source.filter(series.getName(), it -> !it.equals(converter.apply(value)));
+                }
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <S extends Comparable<S>> DataFrame filter(String series, Predicate<S> test) {
+        final Series<?> s = get(series);
+        if (s == null) {
+            throw new IllegalArgumentException("Could not find");
+        }
+        switch (s.getType()) {
+            case LONG:
+                return filter(s.asLong().map((Predicate<Long>) test));
+            case BOOLEAN:
+                return filter(s.asBoolean().map((Predicate<Boolean>) test));
+            case STRING:
+                return filter(s.asString().map((Predicate<String>) test));
+            case DOUBLE:
+                return filter(s.asDouble().map((Predicate<Double>) test));
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
+
+    /*
+                @Override
+                public DataFrameGroupBy groupBy(int column) {
+                    if (groupBy == null || groupBy.column != column) {
+                        groupBy = new DataFrameGroupBy(this, column);
+                    }
+                    return groupBy;
+                }
+            */
     static int[] range(int start, int end) {
         return range(new int[end - start], start, end);
     }
 
-    static <T extends Comparable<T>> DataSeries<T> extract(DataSeries<T> d) {
-        while (d.getClass() == DataSeriesImpl.DataSeriesView.class) {
-            d = ((DataSeriesImpl.DataSeriesView<T>) d).dataSeries;
+    @SuppressWarnings("unchecked")
+    static <S extends Comparable<S>, T extends Series<S>> DataFrame createSubset(final DataFrame dataFrame, String[] names) {
+        @SuppressWarnings("unchecked") final T[] series = (T[]) new Series[names.length];
+        for (int j = 0; j < names.length; ++j) {
+            boolean found = false;
+            for (int i = 0; i < dataFrame.numSeries(); ++i) {
+                final Object c = dataFrame.get(names[j]);
+                if (c != null) {
+                    series[j] = (T) c;
+                    found = true;
+                    break;
+                }
+
+            }
+            if (!found) {
+                throw new IllegalArgumentException("Could not find column by name " + names[j]);
+            }
+        }
+        return new DataFrameImpl.OfArray(dataFrame.getName(), series);
+    }
+
+    @Override
+    public DataFrame subset(String... names) {
+        return createSubset(this, names);
+    }
+
+    static <T extends Comparable<T>> Series<T> extract(Series<T> d) {
+        while (d.getClass() == SeriesImpl.SeriesView.class) {
+            d = ((SeriesImpl.SeriesView<T>) d).dataSeries;
         }
         return d;
     }

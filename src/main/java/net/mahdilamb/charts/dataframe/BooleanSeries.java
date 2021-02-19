@@ -5,7 +5,7 @@ import net.mahdilamb.utils.functions.PrimitiveIterators;
 /**
  * A boolean series
  */
-public interface BooleanSeries extends DataSeries<Boolean>, SeriesWithFunctionalOperators<Boolean> {
+public interface BooleanSeries extends Series<Boolean>, SeriesWithFunctionalOperators<Boolean> {
 
     /**
      * @param index the index
