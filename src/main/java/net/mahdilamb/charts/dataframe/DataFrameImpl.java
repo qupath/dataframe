@@ -24,8 +24,7 @@ import static net.mahdilamb.charts.dataframe.utils.StringUtils.iterateLine;
 /**
  * Default implementation of datasets
  */
-//TODO use correct id column
-//todo check formatting when number of rows equals MAX_ROWS
+//TODO filter without intermediate boolean series
 abstract class DataFrameImpl implements DataFrame {
     enum HistoryType {
         SORT_BY,
@@ -169,12 +168,10 @@ abstract class DataFrameImpl implements DataFrame {
             this.dataFrame = extract(dataFrame);
             this.cols = new int[dataFrame.numSeries()];
             int j = 0;
-            int i = 0;
-            while (i < dataFrame.numSeries()) {
+            for (int i = 0; i < dataFrame.numSeries(); ++i) {
                 if (test.test(dataFrame.get(i).getName())) {
                     cols[j++] = i;
                 }
-                ++i;
             }
             numCols = j;
             if (((DataFrameImpl) dataFrame).toStringData != null) {
@@ -196,9 +193,9 @@ abstract class DataFrameImpl implements DataFrame {
         @Override
         @SuppressWarnings("unchecked")
         public Series<Comparable<Object>> get(int series) {
+            series = cols == null ? series : cols[series];
             if (numRows == -1 && numCols == -1) {
                 return dataFrame.get(series);
-
             } else {
                 if (this.series == null) {
                     this.series = new Series[dataFrame.numSeries()];
@@ -511,7 +508,7 @@ abstract class DataFrameImpl implements DataFrame {
             stringBuilder.delete(stringBuilder.length() - COLUMN_SEPARATOR.length(), stringBuilder.length()).append('\n');
         }
 
-        stringBuilder.append(String.format("Dataset {name: \"%s\", cols: %d, rows: %d", getName(), numSeries(), size(Axis.INDEX)));
+        stringBuilder.append(String.format("DataFrame {name: \"%s\", cols: %d, rows: %d", getName(), numSeries(), size(Axis.INDEX)));
         if (toStringData != null) {
             for (final Map.Entry<HistoryType, StringBuilder> el : getHistory().entrySet()) {
                 stringBuilder.append(',').append(' ').append(el.getKey()).append(':').append(' ').append('"').append(el.getValue()).append('"');

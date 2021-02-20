@@ -5,6 +5,32 @@ final class Sorts {
 
     }
 
+    /**
+     * @param a left operand
+     * @param b right operand
+     * @return whether one boolean is 'greater' than another
+     */
+    static boolean gt(boolean a, boolean b) {
+        return a && !b;
+    }
+
+    /**
+     * @param a left operand
+     * @param b right operand
+     * @return whether one boolean is 'greater' than or equal to another
+     */
+    static boolean ge(boolean a, boolean b) {
+        return (a & !b) | (a == b);
+    }
+
+    /**
+     * @param a left operand
+     * @param b right operand
+     * @return whether one boolean is 'less' than another
+     */
+    static boolean lt(boolean a, boolean b) {
+        return !a && b;
+    }
     static void swap(double[] arr, int i, int j) {
         double temp = arr[i];
         arr[i] = arr[j];

@@ -7,8 +7,7 @@ import java.util.function.IntPredicate;
 import java.util.function.IntToDoubleFunction;
 import java.util.function.IntToLongFunction;
 
-import static net.mahdilamb.charts.dataframe.utils.Sorts.intRange;
-import static net.mahdilamb.charts.dataframe.utils.Sorts.swap;
+import static net.mahdilamb.charts.dataframe.utils.Sorts.*;
 
 /**
  * Dual pivot quick sort based on https://www.geeksforgeeks.org/dual-pivot-quicksort/
@@ -235,32 +234,6 @@ public final class DualPivotQuickSort {
         return args;
     }
 
-    /**
-     * @param a left operand
-     * @param b right operand
-     * @return whether one boolean is 'greater' than another
-     */
-    private static boolean gt(boolean a, boolean b) {
-        return a && !b;
-    }
-
-    /**
-     * @param a left operand
-     * @param b right operand
-     * @return whether one boolean is 'greater' than or equal to another
-     */
-    private static boolean ge(boolean a, boolean b) {
-        return (a & !b) | (a == b);
-    }
-
-    /**
-     * @param a left operand
-     * @param b right operand
-     * @return whether one boolean is 'less' than another
-     */
-    private static boolean lt(boolean a, boolean b) {
-        return !a && b;
-    }
 
     private static void dualPivotQuickSort(int[] args, long[] arr, int low, int high) {
         if (low < high) {

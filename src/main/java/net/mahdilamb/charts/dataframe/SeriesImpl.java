@@ -1,11 +1,7 @@
 package net.mahdilamb.charts.dataframe;
 
-import net.mahdilamb.charts.dataframe.utils.DualPivotQuickSort;
-import net.mahdilamb.charts.dataframe.utils.GroupBy;
-import net.mahdilamb.charts.dataframe.utils.IteratorUtils;
-import net.mahdilamb.charts.dataframe.utils.StringUtils;
+import net.mahdilamb.charts.dataframe.utils.*;
 
-import java.util.Iterator;
 import java.util.function.*;
 
 import static net.mahdilamb.charts.dataframe.DataFrameImpl.COLUMN_SEPARATOR;
@@ -56,7 +52,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, data, ascending);
+            GoSort.argSort(args, size, data, ascending);
         }
     }
 
@@ -90,7 +86,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, data, ascending);
+            GoSort.argSort(args, size, data, ascending);
         }
     }
 
@@ -122,7 +118,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, data, ascending);
+            GoSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -147,7 +143,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, this::getDouble, ascending);
+            GoSort.argSort(args, size, this::getDouble, ascending);
         }
     }
 
@@ -176,7 +172,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, this::getLong, ascending);
+            GoSort.argSort(args, size, this::getLong, ascending);
 
         }
     }
@@ -222,7 +218,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, data, ascending);
+            GoSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -265,7 +261,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, data, ascending);
+            GoSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -289,7 +285,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, this::getDouble, ascending);
+            GoSort.argSort(args, size, this::getDouble, ascending);
 
         }
     }
@@ -314,78 +310,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            DualPivotQuickSort.argSort(args, size, this::getBoolean,ascending);
+            GoSort.argSort(args, size, this::getBoolean, ascending);
 
         }
     }
 
-    static final class RepeatedString extends SeriesImpl<String> implements StringSeries {
-
-        private final StringRepetition[] repeats;
-
-        /**
-         * Create an abstract named series
-         *
-         * @param name the name of the series
-         */
-        protected RepeatedString(String name, StringRepetition... repeats) {
-            super(name);
-            if (repeats.length <= 0) {
-                throw new IllegalArgumentException("must be at least one repeat");
-            }
-            this.repeats = repeats;
-            int size = 0;
-            for (final StringRepetition r : repeats) {
-                size += r.num;
-            }
-            this.end = size;
-        }
-
-        @Override
-        public Iterator<String> iterator() {
-            return new Iterator<String>() {
-                private int i = 0;
-                private int j = 0;
-                private int k = 0;
-                private StringRepetition currentRepetition = repeats[0];
-
-                @Override
-                public boolean hasNext() {
-                    return i < end;
-                }
-
-                @Override
-                public String next() {
-                    ++i;
-                    if (j < currentRepetition.num) {
-                        ++j;
-                    } else {
-                        currentRepetition = repeats[++k];
-                        j = 1;
-                    }
-                    return currentRepetition.data;
-                }
-            };
-        }
-
-        @Override
-        public String get(int index) {
-
-            int i = 0, j = 0;
-            while (i < end) {
-                j += repeats[i++].num;
-                if (j > index) {
-                    return repeats[i - 1].data;
-                }
-            }
-            throw new IndexOutOfBoundsException();
-        }
-
-        @Override
-        void sortArgs(int[] args, int size, boolean ascending) {
-            throw new UnsupportedOperationException();
-        }
-    }
 
     private GroupBy<T> group;
     private final String name;
