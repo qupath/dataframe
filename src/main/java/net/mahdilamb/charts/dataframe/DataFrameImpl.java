@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -25,7 +27,27 @@ import static net.mahdilamb.charts.dataframe.utils.StringUtils.iterateLine;
 //TODO use correct id column
 //todo check formatting when number of rows equals MAX_ROWS
 abstract class DataFrameImpl implements DataFrame {
+    enum HistoryType {
+        SORT_BY,
+        SORT_BY_DESC,
+        FILTER;
 
+        @Override
+        public String toString() {
+            switch (this) {
+                case SORT_BY:
+                    return "sortedBy";
+                case SORT_BY_DESC:
+                    return "sortedBy [desc]";
+                case FILTER:
+                    return "filteredBy";
+                default:
+                    throw new UnsupportedOperationException(this.name());
+            }
+        }
+    }
+
+    Map<HistoryType, StringBuilder> toStringData;
     /**
      * The prefix to use for unnamed columns
      */
@@ -80,23 +102,26 @@ abstract class DataFrameImpl implements DataFrame {
             }
         }
 
-
     }
 
     static final class DataFrameView extends DataFrameImpl {
         //todo hashmap series names
         private final DataFrame dataFrame;
-        int numSeries = -1;
-        int[] seriesIDs;
+        int numCols = -1;
+        int[] cols;
         Series<?>[] series;
         int[] rows;
         int numRows = -1;
 
-        public DataFrameView(DataFrame dataFrame, int[] ids) {
+
+        public DataFrameView(DataFrame dataFrame, int[] cols) {
             super(dataFrame.getName());
             this.dataFrame = extract(dataFrame);
-            this.numSeries = ids.length;
-            seriesIDs = ids;
+            this.numCols = cols.length;
+            this.cols = cols;
+            if (((DataFrameImpl) dataFrame).toStringData != null) {
+                getHistory().putAll(((DataFrameImpl) dataFrame).getHistory());
+            }
         }
 
         public DataFrameView(DataFrame dataFrame, int[] cols, int numCols, int[] rows, int numRows) {
@@ -104,9 +129,11 @@ abstract class DataFrameImpl implements DataFrame {
             this.dataFrame = extract(dataFrame);
             this.rows = rows;
             this.numRows = numRows;
-            seriesIDs = cols;
-            this.numSeries = numCols;
-
+            this.cols = cols;
+            this.numCols = numCols;
+            if (((DataFrameImpl) dataFrame).toStringData != null) {
+                getHistory().putAll(((DataFrameImpl) dataFrame).getHistory());
+            }
         }
 
         public DataFrameView(DataFrame dataFrame, int[] rows, int numRows) {
@@ -114,36 +141,45 @@ abstract class DataFrameImpl implements DataFrame {
             this.dataFrame = extract(dataFrame);
             this.rows = rows;
             this.numRows = numRows;
+            if (((DataFrameImpl) dataFrame).toStringData != null) {
+                getHistory().putAll(((DataFrameImpl) dataFrame).getHistory());
+            }
         }
 
         public DataFrameView(DataFrame dataFrame, IntPredicate test) {
             super(dataFrame.getName());
             this.dataFrame = extract(dataFrame);
-            this.seriesIDs = new int[dataFrame.numSeries()];
+            this.cols = new int[dataFrame.numSeries()];
             int j = 0;
             int i = 0;
             while (i < dataFrame.numSeries()) {
                 if (test.test(i)) {
-                    seriesIDs[j++] = i;
+                    cols[j++] = i;
                 }
                 ++i;
             }
-            numSeries = j;
+            numCols = j;
+            if (((DataFrameImpl) dataFrame).toStringData != null) {
+                getHistory().putAll(((DataFrameImpl) dataFrame).getHistory());
+            }
         }
 
         public DataFrameView(DataFrame dataFrame, Predicate<String> test) {
             super(dataFrame.getName());
             this.dataFrame = extract(dataFrame);
-            this.seriesIDs = new int[dataFrame.numSeries()];
+            this.cols = new int[dataFrame.numSeries()];
             int j = 0;
             int i = 0;
             while (i < dataFrame.numSeries()) {
                 if (test.test(dataFrame.get(i).getName())) {
-                    seriesIDs[j++] = i;
+                    cols[j++] = i;
                 }
                 ++i;
             }
-            numSeries = j;
+            numCols = j;
+            if (((DataFrameImpl) dataFrame).toStringData != null) {
+                getHistory().putAll(((DataFrameImpl) dataFrame).getHistory());
+            }
         }
 
         public DataFrameView(DataFrame dataFrame, int start, int end) {
@@ -160,7 +196,7 @@ abstract class DataFrameImpl implements DataFrame {
         @Override
         @SuppressWarnings("unchecked")
         public Series<Comparable<Object>> get(int series) {
-            if (numRows == -1 && numSeries == -1) {
+            if (numRows == -1 && numCols == -1) {
                 return dataFrame.get(series);
 
             } else {
@@ -197,7 +233,7 @@ abstract class DataFrameImpl implements DataFrame {
 
         @Override
         public int numSeries() {
-            return numSeries == -1 ? dataFrame.numSeries() : numSeries;
+            return numCols == -1 ? dataFrame.numSeries() : numCols;
         }
 
         @Override
@@ -475,7 +511,13 @@ abstract class DataFrameImpl implements DataFrame {
             stringBuilder.delete(stringBuilder.length() - COLUMN_SEPARATOR.length(), stringBuilder.length()).append('\n');
         }
 
-        return stringBuilder.append(String.format("Dataset {name: \"%s\", cols: %d, rows: %d}\n", getName(), numSeries(), size(Axis.INDEX))).toString();
+        stringBuilder.append(String.format("Dataset {name: \"%s\", cols: %d, rows: %d", getName(), numSeries(), size(Axis.INDEX)));
+        if (toStringData != null) {
+            for (final Map.Entry<HistoryType, StringBuilder> el : getHistory().entrySet()) {
+                stringBuilder.append(',').append(' ').append(el.getKey()).append(':').append(' ').append('"').append(el.getValue()).append('"');
+            }
+        }
+        return stringBuilder.append('}').toString();
     }
 
     static StringBuilder alignRight(StringBuilder stringBuilder, final String td, int width, UnaryOperator<StringBuilder> trimmer) {
@@ -552,6 +594,7 @@ abstract class DataFrameImpl implements DataFrame {
                 ids[size++] = get(0).getID(i);
             }
         }
+        addFilter(filter);
         return new DataFrameView(this, ids, size);
     }
 
@@ -618,13 +661,13 @@ abstract class DataFrameImpl implements DataFrame {
                 final Series<?> series = get(query.substring(nameStart, nameEnd));
                 switch (series.getType()) {
                     case STRING:
-                        return filter(series.getName(),(Predicate<String>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it));
-                        case BOOLEAN:
-                        return filter(series.getName(),(Predicate<Boolean>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toBoolean));
+                        return filter(series.getName(), (Predicate<String>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it));
+                    case BOOLEAN:
+                        return filter(series.getName(), (Predicate<Boolean>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toBoolean));
                     case LONG:
-                        return filter(series.getName(),(Predicate<Long>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toLong));
+                        return filter(series.getName(), (Predicate<Long>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toLong));
                     case DOUBLE:
-                        return filter(series.getName(),(Predicate<Double>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toDouble));
+                        return filter(series.getName(), (Predicate<Double>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toDouble));
                     default:
                         throw new UnsupportedOperationException();
                 }
@@ -729,15 +772,49 @@ abstract class DataFrameImpl implements DataFrame {
         return new DataFrameImpl.OfArray(dataFrame.getName(), series);
     }
 
+    Map<HistoryType, StringBuilder> getHistory() {
+        if (toStringData == null) {
+            toStringData = new LinkedHashMap<>();
+        }
+        return toStringData;
+    }
+
     @Override
     public DataFrame subset(String... names) {
         return createSubset(this, names);
     }
 
-    static <T extends Comparable<T>> Series<T> extract(Series<T> d) {
-        while (d.getClass() == SeriesImpl.SeriesView.class) {
-            d = ((SeriesImpl.SeriesView<T>) d).dataSeries;
+    private DataFrame sortBySeries(final SeriesImpl<?> series, boolean ascending) {
+        final int[] ids;
+        int numIds;
+        if (getClass() == DataFrameView.class) {
+            ids = ((DataFrameView) this).rows == null ? range(0, size(Axis.INDEX)) : ((DataFrameView) this).rows;
+            numIds = ((DataFrameView) this).numRows == -1 ? size(Axis.INDEX) : ((DataFrameView) this).numRows;
+        } else {
+            ids = range(0, size(Axis.INDEX));
+            numIds = ids.length;
         }
-        return d;
+        series.sortArgs(ids, numIds, ascending);
+        getHistory().put(ascending ? HistoryType.SORT_BY : HistoryType.SORT_BY_DESC, new StringBuilder(series.getName()));
+        return this.getClass() == DataFrameView.class ? new DataFrameView(this, ((DataFrameView) this).cols, ((DataFrameView) this).numCols, ids, numIds) : new DataFrameView(this, ids, numIds);
+    }
+
+    private void addFilter(final Series<?> series) {
+        final StringBuilder sn = getHistory().get(HistoryType.FILTER);
+        if (sn == null) {
+            getHistory().put(HistoryType.FILTER, new StringBuilder(series.getName()));
+        } else {
+            sn.append(", ").append(series.getName());
+        }
+    }
+
+    @Override
+    public DataFrame sortBy(int index, boolean ascending) {
+        return sortBySeries((SeriesImpl<?>) get(index), ascending);
+    }
+
+    @Override
+    public DataFrame sortBy(String name, boolean ascending) {
+        return sortBySeries((SeriesImpl<?>) get(name), ascending);
     }
 }

@@ -62,7 +62,7 @@ public interface Series<T> extends Iterable<T> {
     default StringSeries asString() {
         switch (getType()) {
             case STRING:
-                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.StringSeriesView((SeriesImpl.SeriesView<String>) this) : (StringSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.StringSeriesView((SeriesImpl.SeriesView<String>) this) : (StringSeries) this;
             case BOOLEAN:
                 return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Boolean) el));
             case LONG:
@@ -78,7 +78,7 @@ public interface Series<T> extends Iterable<T> {
     default DoubleSeries asDouble() {
         switch (getType()) {
             case DOUBLE:
-                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.DoubleSeriesView((SeriesImpl.SeriesView<Double>) this) : (DoubleSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.DoubleSeriesView((SeriesImpl.SeriesView<Double>) this) : (DoubleSeries) this;
             case BOOLEAN:
                 return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((Boolean) el));
             case LONG:
@@ -94,7 +94,7 @@ public interface Series<T> extends Iterable<T> {
     default LongSeries asLong() {
         switch (getType()) {
             case LONG:
-                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.LongSeriesView((SeriesImpl.SeriesView<Long>)this) : (LongSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.LongSeriesView((SeriesImpl.SeriesView<Long>) this) : (LongSeries) this;
             case DOUBLE:
                 return new SeriesImpl.OfLongArray(this, el -> DataType.toLong((Double) el), v -> !Double.isNaN((Double) v));
             case BOOLEAN:
@@ -110,7 +110,7 @@ public interface Series<T> extends Iterable<T> {
     default BooleanSeries asBoolean() {
         switch (getType()) {
             case BOOLEAN:
-                return this.getClass() == SeriesImpl.SeriesView.class? new SeriesImpl.BooleanSeriesView((SeriesImpl.SeriesView<Boolean>) this) : (BooleanSeries) this;
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.BooleanSeriesView((SeriesImpl.SeriesView<Boolean>) this) : (BooleanSeries) this;
             case STRING:
                 return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((String) el));
             case LONG:
@@ -280,23 +280,10 @@ public interface Series<T> extends Iterable<T> {
      */
     Series<T> subset(IntPredicate test);
 
-    static boolean isNumericSeries(Series<?> series) {
-        return DataType.isNumeric(series.getType());
+    Series<T> sort(boolean ascending);
+
+    default Series<T> sort() {
+        return sort(true);
     }
 
-    static boolean isDoubleSeries(Series<?> series) {
-        return series.getType() == DataType.DOUBLE;
-    }
-
-    static boolean isStringSeries(Series<?> series) {
-        return series.getType() == DataType.STRING;
-    }
-
-    static boolean isLongSeries(Series<?> series) {
-        return series.getType() == DataType.LONG;
-    }
-
-    static boolean isBooleanSeries(Series<?> series) {
-        return series.getType() == DataType.BOOLEAN;
-    }
 }

@@ -5,7 +5,6 @@ import net.mahdilamb.charts.dataframe.utils.StringUtils;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -213,6 +212,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
         return filter(filter.apply(this));
     }
 
+
     /**
      * Perform a simple query on the dataframe. Currently only supports single equality operators
      *
@@ -221,15 +221,16 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     DataFrame query(final String query);
 
-    /**
-     * Check the type of a series
-     *
-     * @param index the index of a series
-     * @param type  the type of check
-     * @return if the series at the specified index is the type specified
-     */
-    default boolean isSeriesType(final int index, final DataType type) {
-        return get(index).getType() == type;
+    DataFrame sortBy(final int index, boolean ascending);
+
+    DataFrame sortBy(final String name, boolean ascending);
+
+    default DataFrame sortBy(final int index) {
+        return sortBy(index, true);
+    }
+
+    default DataFrame sortBy(final String name){
+        return sortBy(name, true);
     }
 
     /**
@@ -412,5 +413,6 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     static DataFrameImporter clipboardImport(char separator, char quoteCharacter, Charset charset) throws IOException, UnsupportedFlavorException {
         return new DataFrameImporter.FromString(getStringFromClipboard(), separator, quoteCharacter, charset, true);
     }
+
 
 }

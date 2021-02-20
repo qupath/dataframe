@@ -1,11 +1,15 @@
 package net.mahdilamb.charts.dataframe;
 
+import net.mahdilamb.charts.dataframe.utils.DualPivotQuickSort;
 import net.mahdilamb.charts.dataframe.utils.GroupBy;
+import net.mahdilamb.charts.dataframe.utils.IteratorUtils;
 import net.mahdilamb.charts.dataframe.utils.StringUtils;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.*;
+
+import static net.mahdilamb.charts.dataframe.DataFrameImpl.COLUMN_SEPARATOR;
+import static net.mahdilamb.charts.dataframe.DataFrameImpl.range;
 
 /**
  * Implementations of the various different types of series
@@ -13,63 +17,7 @@ import java.util.function.*;
  * @param <T> the type of the elements in the series
  */
 abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesWithFunctionalOperators<T> {
-    static int MAX_VISIBLE_CELLS = 10;
-
-    static final class AsTypeArray<S extends Comparable<S>, T extends Comparable<T>> extends SeriesImpl<T> {
-        private final Series<S> source;
-        private final Function<S, T> converter;
-        private final DataType dataType;
-
-        AsTypeArray(Series<S> source, DataType dataType, Function<S, T> converter) {
-            super(source.getName());
-            this.source = source;
-            this.converter = converter;
-            this.dataType = dataType;
-            this.end = source.size();
-
-        }
-
-        @Override
-        public T get(int index) {
-            return converter.apply(source.get(index));
-        }
-
-        @Override
-        public DataType getType() {
-            return dataType;
-        }
-    }
-
-    static final class AsNumericTypeArray<S extends Comparable<S>, T extends Number & Comparable<T>> extends SeriesImpl<T> implements NumericSeries<T> {
-        private final Series<S> source;
-        private final Function<S, T> converter;
-        private final DataType dataType;
-
-        AsNumericTypeArray(Series<S> source, DataType dataType, Function<S, T> converter) {
-            super(source.getName());
-            this.source = source;
-            this.converter = converter;
-            this.dataType = dataType;
-            this.end = source.size();
-
-        }
-
-        @Override
-        public T get(int index) {
-            return converter.apply(source.get(index));
-        }
-
-        @Override
-        public DataType getType() {
-            return dataType;
-        }
-
-        @Override
-        public boolean isNaN(int index) {
-            return get(index) == null || (get(index).getClass() == Double.class && Double.isNaN((Double) get(index)));
-        }
-    }
-
+    static int MAX_VISIBLE_CELLS = 25;
 
     /**
      * Default implementation of a series backed by a double array
@@ -106,6 +54,10 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return data[index];
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, data, ascending);
+        }
     }
 
     /**
@@ -135,6 +87,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
                 data[i] = converter.test(source.get(i));
             }
         }
+
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, data, ascending);
+        }
     }
 
     /**
@@ -163,6 +120,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return data[index];
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, data, ascending);
+
+        }
     }
 
     /**
@@ -183,6 +145,10 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return DataType.toDouble(data[index]);
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, this::getDouble, ascending);
+        }
     }
 
     /**
@@ -206,6 +172,12 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         @Override
         public boolean isNaN(int index) {
             return !DataType.LONG.matches(data[index]);
+        }
+
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, this::getLong, ascending);
+
         }
     }
 
@@ -234,13 +206,6 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return data[index] == null;
         }
 
-        static int[] ensureCapacity(int[] array, int newCapacity) {
-            if (newCapacity > array.length) {
-                return Arrays.copyOf(array, newCapacity);
-            }
-            return array;
-        }
-
         <S> OfLongArray(Series<S> source, ToLongFunction<S> converter, Predicate<S> notNanTest) {
             super(source.getName());
             data = new Long[source.size()];
@@ -255,6 +220,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             }
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, data, ascending);
+
+        }
     }
 
     static final class OfNonNaNLongArray extends SeriesImpl<Long> implements LongSeries {
@@ -293,6 +263,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return false;
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, data, ascending);
+
+        }
     }
 
     /**
@@ -312,6 +287,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return dataGetter.applyAsDouble(index);
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, this::getDouble, ascending);
+
+        }
     }
 
     /**
@@ -332,6 +312,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             return DataType.toBoolean(data[index]);
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            DualPivotQuickSort.argSort(args, size, this::getBoolean,ascending);
+
+        }
     }
 
     static final class RepeatedString extends SeriesImpl<String> implements StringSeries {
@@ -358,7 +343,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         public Iterator<String> iterator() {
-            return new Iterator<>() {
+            return new Iterator<String>() {
                 private int i = 0;
                 private int j = 0;
                 private int k = 0;
@@ -396,6 +381,10 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             throw new IndexOutOfBoundsException();
         }
 
+        @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private GroupBy<T> group;
@@ -443,20 +432,21 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
     public String toString() {
         final StringBuilder stringBuilder = new StringBuilder();
         if (size() > 1) {
-            int width = Math.max(1, String.valueOf(getID(size() - 1)).length());
+
+            int width = IteratorUtils.skippedIterator(COLUMN_SEPARATOR.length(), (n, o) -> Math.max(n, (o != -1 ? String.valueOf(getID(o)) : COLUMN_SEPARATOR).length()), size(), MAX_VISIBLE_CELLS);
             if (size() <= MAX_VISIBLE_CELLS) {
                 for (int i = 0; i < size(); ++i) {
-                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
+                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
                 }
             } else {
                 int halfRows = MAX_VISIBLE_CELLS >>> 1;
                 for (int i = 0; i < halfRows; ++i) {
-                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
+                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
                 }
                 //ellipses
-                DataFrameImpl.alignRight(stringBuilder, StringUtils.repeatCharacter('.', Math.min(3, Math.max(width, 1))), width).append(DataFrameImpl.COLUMN_SEPARATOR).append("...\n");
+                DataFrameImpl.alignRight(stringBuilder, StringUtils.repeatCharacter('.', Math.min(3, Math.max(width, 1))), width).append(COLUMN_SEPARATOR).append("...\n");
                 for (int i = size() - halfRows; i < size(); ++i) {
-                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(DataFrameImpl.COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
+                    DataFrameImpl.alignRight(stringBuilder, String.valueOf(getID(i)), width).append(COLUMN_SEPARATOR).append(formatCell(this, i)).append('\n');
                 }
             }
 
@@ -483,7 +473,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         public SeriesView(Series<T> dataSeries, int[] ids, int numRows) {
             super(dataSeries.getName());
-            if (dataSeries.getClass() == SeriesView.class) {
+            if (dataSeries instanceof SeriesView) {
                 this.dataSeries = ((SeriesView<T>) dataSeries).dataSeries;
                 rows = new int[ids.length];
                 for (int i = 0; i < ids.length; ++i) {
@@ -494,7 +484,6 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
                 rows = ids;
             }
             this.numRows = numRows;
-
         }
 
         public SeriesView(Series<T> dataSeries, int[] ids) {
@@ -505,7 +494,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             super(dataSeries.getName());
             int j = 0;
             int i = 0;
-            if (dataSeries.getClass() == SeriesView.class) {
+            if (dataSeries instanceof SeriesView) {
                 this.dataSeries = ((SeriesView<T>) dataSeries).dataSeries;
                 this.rows = new int[dataSeries.size()];
 
@@ -536,11 +525,22 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         public int getID(int i) {
+            if (i >= numRows) {
+                throw new IndexOutOfBoundsException();
+            }
             return rows[i];
         }
 
         @Override
+        void sortArgs(int[] args, int size, boolean ascending) {
+            ((SeriesImpl<T>) dataSeries).sortArgs(args, size, ascending);
+        }
+
+        @Override
         public T get(int index) {
+            if (index >= numRows) {
+                throw new IndexOutOfBoundsException();
+            }
             return dataSeries.get(rows[index]);
         }
 
@@ -617,4 +617,21 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
         return new SeriesView<>(this, ids, size);
     }
+
+    @Override
+    public Series<T> sort(boolean ascending) {
+        final int[] ids;
+        final int numIds;
+        if (this instanceof SeriesView) {
+            ids = ((SeriesView<T>) this).rows.clone();
+            numIds = ((SeriesView<T>) this).numRows;
+        } else {
+            ids = range(0, size());
+            numIds = size();
+        }
+        sortArgs(ids, numIds, ascending);
+        return this instanceof SeriesView ? new SeriesView<>(((SeriesView<T>) this).dataSeries, ids, numIds) : new SeriesView<>(this, ids, numIds);
+    }
+
+    abstract void sortArgs(int[] args, int size, boolean ascending);
 }
