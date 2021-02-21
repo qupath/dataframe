@@ -2,8 +2,8 @@ package net.mahdilamb.charts.dataframe.utils;
 
 import net.mahdilamb.utils.functions.BiDoublePredicate;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
 
@@ -14,6 +14,7 @@ import java.util.function.ToDoubleFunction;
  */
 public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
 
+
     /**
      * A group of items
      *
@@ -21,8 +22,8 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      */
     public static final class Group<T> implements Iterable<Integer> {
         int id;
-        T key;
-        IntArrayList indices = new IntArrayList();
+        final T key;
+        final IntArrayList indices = new IntArrayList();
 
         @Override
         public String toString() {
@@ -92,8 +93,8 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      *
      * @param size the initial number of groups
      */
-    public GroupBy(int size) {
-        this.groupTable = new HashMap<>(size);
+    private GroupBy(int size) {
+        this.groupTable = new LinkedHashMap<>(size);
     }
 
     /**
@@ -104,7 +105,7 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
     public GroupBy(Iterable<T> data) {
         this();
         int i = 0;
-        for (T key : data) {
+        for (final T key : data) {
             add(key, i++);
         }
     }
@@ -130,10 +131,11 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      *
      * @param data the data
      */
-    public GroupBy(T[] data) {
+    @SafeVarargs
+    public GroupBy(T... data) {
         this();
         int i = 0;
-        for (T key : data) {
+        for (final T key : data) {
             add(key, i++);
         }
     }
@@ -142,7 +144,7 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      * Create a groupby with an initial capacity of 4
      */
     public GroupBy() {
-        this.groupTable = new HashMap<>();
+        this.groupTable = new LinkedHashMap<>();
     }
 
     /**
@@ -162,6 +164,15 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
         return groupTable.get(key);
     }
 
+    public Group<T> getGroup(int index) {
+        for (final Map.Entry<T, Group<T>> g : groupTable.entrySet()) {
+            if (g.getValue().getID() == index) {
+                return g.getValue();
+            }
+        }
+        return null;
+    }
+
     /**
      * Test if a group contains a key
      *
@@ -178,7 +189,7 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      * @param key the key
      * @param i   the index
      */
-    public void add(T key, int i) {
+    private void add(T key, int i) {
         ++size;
         final Group<T> g = groupTable.get(key);
         if (g != null) {
@@ -245,15 +256,13 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
     /**
      * Map a consumer over the groups
      *
-     * @param consumer the consumer to use. The signature is: {obj, group_index, index}
+     * @param consumer the consumer to use. The signature is: {group_index, index}
      */
     public void forEach(BiIntConsumer consumer) {
-        int i = 0;
         for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
             for (final int j : e.getValue()) {
-                consumer.accept(i, j);
+                consumer.accept(e.getValue().getID(), j);
             }
-            i++;
         }
     }
 
@@ -263,9 +272,9 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      * @param array the array
      * @return the array, if the size is less than the number of indices. Or a new array otherwise
      */
-    public int[] toArray(int[] array) {
-        if (array == null || array.length < size) {
-            array = new int[size];
+    public int[] toMeltedArray(int[] array) {
+        if (array == null || array.length < size()) {
+            array = new int[size()];
         }
         for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
             for (final int j : e.getValue()) {
@@ -275,11 +284,24 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
         return array;
     }
 
+    @SuppressWarnings("unchecked")
+    public T[] toMeltedArray(T[] array) {
+        if (array == null || array.length < size()) {
+            array = (T[]) new Object[size()];
+        }
+        for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
+            for (final int j : e.getValue()) {
+                array[j] = e.getValue().get();
+            }
+        }
+        return array;
+    }
+
     /**
      * @return an array of the indices of the groups
      */
-    public int[] toArray() {
-        final int[] out = new int[size];
+    public int[] toMeltedArray() {
+        final int[] out = new int[size()];
         for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
             for (final int j : e.getValue()) {
                 out[j] = e.getValue().getID();

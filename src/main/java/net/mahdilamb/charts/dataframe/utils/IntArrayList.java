@@ -193,7 +193,7 @@ public final class IntArrayList implements Iterable<Integer> {
 
     private void checkRange(int index) {
         if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException(index);
         }
     }
 

@@ -1,6 +1,9 @@
 package net.mahdilamb.charts.dataframe;
 
-import net.mahdilamb.charts.dataframe.utils.*;
+import net.mahdilamb.charts.dataframe.utils.GroupBy;
+import net.mahdilamb.charts.dataframe.utils.IntroSort;
+import net.mahdilamb.charts.dataframe.utils.IteratorUtils;
+import net.mahdilamb.charts.dataframe.utils.StringUtils;
 
 import java.util.function.*;
 
@@ -52,7 +55,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
         }
     }
 
@@ -86,7 +89,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
         }
     }
 
@@ -118,7 +121,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -143,7 +146,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getDouble, ascending);
+            IntroSort.argSort(args, size, this::getDouble, ascending);
         }
     }
 
@@ -172,7 +175,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getLong, ascending);
+            IntroSort.argSort(args, size, this::getLong, ascending);
 
         }
     }
@@ -218,7 +221,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -261,7 +264,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -285,7 +288,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getDouble, ascending);
+            IntroSort.argSort(args, size, this::getDouble, ascending);
 
         }
     }
@@ -310,7 +313,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getBoolean, ascending);
+            IntroSort.argSort(args, size, this::getBoolean, ascending);
 
         }
     }
@@ -415,6 +418,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             this.numRows = numRows;
         }
 
+
         public SeriesView(Series<T> dataSeries, int[] ids) {
             this(dataSeries, ids, ids.length);
         }
@@ -455,7 +459,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         @Override
         public int getID(int i) {
             if (i >= numRows) {
-                throw new IndexOutOfBoundsException();
+                throw new IndexOutOfBoundsException(i);
             }
             return rows[i];
         }
@@ -468,7 +472,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         @Override
         public T get(int index) {
             if (index >= numRows) {
-                throw new IndexOutOfBoundsException();
+                throw new IndexOutOfBoundsException(index);
             }
             return dataSeries.get(rows[index]);
         }

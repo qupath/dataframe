@@ -13,9 +13,43 @@ import static net.mahdilamb.charts.dataframe.utils.Sorts.lt;
 /**
  * Java port of default sort algorithm in GO(lang). Combination of insertion/heap/quick sort
  * See <a href="https://golang.org/src/sort/sort.go">go source for more information</a>
+ * The original implementation is copyright to the GO authors:
+ * <p>
+ * Copyright 2009 The Go Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the <a href="https://golang.org/LICENSE">LICENSE</a> file (as below).
  */
-public final class GoSort {
-    private GoSort() {
+/*
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+public final class IntroSort {
+    private IntroSort() {
 
     }
 
@@ -29,9 +63,9 @@ public final class GoSort {
      */
     public static void argSort(int[] args, int numArgs, double[] data, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, GoSort::lessThan, numArgs);
+            quickSort(args, data, IntroSort::lessThan, numArgs);
         } else {
-            quickSort(args, data, GoSort::greaterThan, numArgs);
+            quickSort(args, data, IntroSort::greaterThan, numArgs);
         }
     }
 
@@ -45,9 +79,9 @@ public final class GoSort {
      */
     public static void argSort(int[] args, int numArgs, long[] data, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, GoSort::lessThan, numArgs);
+            quickSort(args, data, IntroSort::lessThan, numArgs);
         } else {
-            quickSort(args, data, GoSort::greaterThan, numArgs);
+            quickSort(args, data, IntroSort::greaterThan, numArgs);
         }
     }
 
@@ -55,7 +89,7 @@ public final class GoSort {
         if (ascending) {
             quickSort(args, null, LessThan.fromDoubleGetter(getter), numArgs);
         } else {
-            quickSort(args, null, LessThan.fromDoubleGetter(getter).reversed(), numArgs);
+            quickSort(args, null, LessThan.fromDoubleGetterReversed(getter), numArgs);
         }
     }
 
@@ -63,7 +97,7 @@ public final class GoSort {
         if (ascending) {
             quickSort(args, null, LessThan.fromLongGetter(getter), numArgs);
         } else {
-            quickSort(args, null, LessThan.fromLongGetter(getter).reversed(), numArgs);
+            quickSort(args, null, LessThan.fromLongGetterReversed(getter), numArgs);
         }
     }
 
@@ -71,7 +105,7 @@ public final class GoSort {
         if (ascending) {
             quickSort(args, null, LessThan.fromBooleanGetter(getter), numArgs);
         } else {
-            quickSort(args, null, LessThan.fromBooleanGetter(getter).reversed(), numArgs);
+            quickSort(args, null, LessThan.fromBooleanGetterReversed(getter), numArgs);
         }
     }
 
@@ -85,9 +119,9 @@ public final class GoSort {
      */
     public static void argSort(int[] args, int numArgs, int[] data, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, GoSort::lessThan, numArgs);
+            quickSort(args, data, IntroSort::lessThan, numArgs);
         } else {
-            quickSort(args, data, GoSort::greaterThan, numArgs);
+            quickSort(args, data, IntroSort::greaterThan, numArgs);
         }
     }
 
@@ -101,9 +135,9 @@ public final class GoSort {
      */
     public static void argSort(int[] args, int numArgs, boolean[] data, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, GoSort::lessThan, numArgs);
+            quickSort(args, data, IntroSort::lessThan, numArgs);
         } else {
-            quickSort(args, data, GoSort::greaterThan, numArgs);
+            quickSort(args, data, IntroSort::greaterThan, numArgs);
         }
     }
 
@@ -162,17 +196,17 @@ public final class GoSort {
      * @param <T> the type of the index store
      */
     @FunctionalInterface
-    public interface LessThan<T> {
+    private interface LessThan<T> {
         /**
          * @param data       the indexed data
          * @param rightIndex the right index
          * @param leftIndex  the left index
          * @return whether the element at the left index is lower than the element at the right index
          */
-        boolean isLessThan(T data, int rightIndex, int leftIndex);
+        boolean test(T data, int leftIndex, int rightIndex);
 
         default LessThan<T> reversed() {
-            return (d, l, r) -> !isLessThan(d, l, r);
+            return (d, l, r) -> test(d, r, l);
         }
 
         /**
@@ -209,12 +243,28 @@ public final class GoSort {
             return (d, l, r) -> lt(func.test(l), func.test(r));
         }
 
+        static LessThan<?> fromDoubleGetterReversed(IntToDoubleFunction func) {
+            return (d, l, r) -> func.applyAsDouble(r) < func.applyAsDouble(l);
+        }
+
+        static LessThan<?> fromLongGetterReversed(IntToLongFunction func) {
+            return (d, l, r) -> func.applyAsLong(r) < func.applyAsLong(l);
+        }
+
+        static LessThan<?> fromIntGetterReversed(IntUnaryOperator func) {
+            return (d, l, r) -> func.applyAsInt(r) < func.applyAsInt(l);
+        }
+
+        static LessThan<?> fromBooleanGetterReversed(IntPredicate func) {
+            return (d, l, r) -> lt(func.test(r), func.test(l));
+        }
+
 
     }
 
-    static <T> void insertionSort(int[] args, T data, LessThan<T> comparator, int a, int b) {
+    static <T> void insertionSort(int[] args, T data, LessThan<T> lessThan, int a, int b) {
         for (int i = a + 1; i < b; ++i) {
-            for (int j = i; j > a && comparator.isLessThan(data, args[j], args[j - 1]); --j) {
+            for (int j = i; j > a && lessThan.test(data, args[j], args[j - 1]); --j) {
                 Sorts.swap(args, j, j - 1);
             }
         }
@@ -235,10 +285,10 @@ public final class GoSort {
             if (child >= hi) {
                 break;
             }
-            if (child + 1 < hi && comparator.isLessThan(data, args[first + child], args[first + child + 1])) {
-                child++;
+            if (child + 1 < hi && comparator.test(data, args[first + child], args[first + child + 1])) {
+                ++child;
             }
-            if (!comparator.isLessThan(data, args[first + root], args[first + child])) {
+            if (!comparator.test(data, args[first + root], args[first + child])) {
                 return;
             }
             Sorts.swap(args, first + root, first + child);
@@ -314,14 +364,14 @@ public final class GoSort {
 
     static <T> void medianOfThree(int[] args, T data, LessThan<T> lt, int m1, int m0, int m2) {
         // sort 3 elements
-        if (lt.isLessThan(data, args[m1], args[m0])) {
+        if (lt.test(data, args[m1], args[m0])) {
             Sorts.swap(args, m1, m0);
         }
         // data[m0] <= data[m1]
-        if (lt.isLessThan(data, args[m2], args[m1])) {
+        if (lt.test(data, args[m2], args[m1])) {
             Sorts.swap(args, m2, m1);
             // data[m0] <= data[m2] && data[m1] < data[m2]
-            if (lt.isLessThan(data, args[m1], args[m0])) {
+            if (lt.test(data, args[m1], args[m0])) {
                 Sorts.swap(args, m1, m0);
             }
         }
@@ -350,7 +400,7 @@ public final class GoSort {
             int mlo, mhi;
             //doPivot
             {
-                int m = ((a + b) >> 1); // Written like this to avoid integer overflow.
+                int m = ((a + b) >> 1);
                 if (b - a > 40) {
                     // Tukey's ``Ninther,'' median of three medians of three.
                     int s = (b - a) / 8;
@@ -459,25 +509,25 @@ public final class GoSort {
         }
     }
 
-    static <T> void quickSort(int[] args, T data, LessThan<T> comparator, int a, int b, int maxDepth) {
+    static <T> void quickSort(int[] args, T data, LessThan<T> lt, int a, int b, int maxDepth) {
         for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
-                heapSort(args, data, comparator, a, b);
+                heapSort(args, data, lt, a, b);
                 return;
             }
             maxDepth--;
             int mlo, mhi;
             //doPivot
             {
-                int m = ((a + b) >> 1); // Written like this to avoid integer overflow.
+                int m = ((a + b) >> 1);
                 if (b - a > 40) {
                     // Tukey's ``Ninther,'' median of three medians of three.
                     int s = (b - a) / 8;
-                    medianOfThree(args, data, comparator, a, a + s, a + 2 * s);
-                    medianOfThree(args, data, comparator, m, m - s, m + s);
-                    medianOfThree(args, data, comparator, b - 1, b - 1 - s, b - 1 - 2 * s);
+                    medianOfThree(args, data, lt, a, a + s, a + 2 * s);
+                    medianOfThree(args, data, lt, m, m - s, m + s);
+                    medianOfThree(args, data, lt, b - 1, b - 1 - s, b - 1 - 2 * s);
                 }
-                medianOfThree(args, data, comparator, a, m, b - 1);
+                medianOfThree(args, data, lt, a, m, b - 1);
 
                 // Invariants are:
                 //	data[a] = pivot (set up by ChoosePivot)
@@ -489,13 +539,13 @@ public final class GoSort {
                 int pivot = a;
                 int _a = a + 1, c = b - 1;
 
-                for (; _a < c && comparator.isLessThan(data, args[_a], args[pivot]); _a++) {
+                for (; _a < c && lt.test(data, args[_a], args[pivot]); _a++) {
                 }
                 int _b = _a;
                 for (; ; ) {
-                    for (; _b < c && !(comparator.isLessThan(data, args[pivot], args[_b])); _b++) { // data[_b] <= pivot
+                    for (; _b < c && !(lt.test(data, args[pivot], args[_b])); _b++) { // data[_b] <= pivot
                     }
-                    for (; _b < c && comparator.isLessThan(data, args[pivot], args[c - 1]); c--) { // data[c-1] > pivot
+                    for (; _b < c && lt.test(data, args[pivot], args[c - 1]); c--) { // data[c-1] > pivot
                     }
                     if (_b >= c) {
                         break;
@@ -511,19 +561,19 @@ public final class GoSort {
                 if (!protect && b - c < (b - a) / 4) {
                     // Lets test some points for equality to pivot
                     int dups = 0;
-                    if (!(comparator.isLessThan(data, args[pivot], args[_b - 1]))) { // data[b-1] = pivot
+                    if (!(lt.test(data, args[pivot], args[_b - 1]))) { // data[b-1] = pivot
                         Sorts.swap(args, c, b - 1);
                         c++;
                         dups++;
                     }
-                    if (!(comparator.isLessThan(data, args[_b - 1], args[pivot]))) { // data[_b-1] = pivot
+                    if (!(lt.test(data, args[_b - 1], args[pivot]))) { // data[_b-1] = pivot
                         _b--;
                         dups++;
                     }
                     // m-a = (b-a)/2 > 6
                     // _b-a > (b-a)*3/4-1 > 8
                     // ==> m < _b ==> data[m] <= pivot
-                    if (!(comparator.isLessThan(data, args[m], args[pivot]))) { // data[m] = pivot
+                    if (!(lt.test(data, args[m], args[pivot]))) { // data[m] = pivot
                         Sorts.swap(args, m, _b - 1);
                         _b--;
                         dups++;
@@ -537,9 +587,9 @@ public final class GoSort {
                     //	data[_a <= i < _b] unexamined
                     //	data[_b <= i < c] = pivot
                     for (; ; ) {
-                        for (; _a < _b && !comparator.isLessThan(data, args[_b - 1], args[pivot]); _b--) { // data[_b] == pivot
+                        for (; _a < _b && !lt.test(data, args[_b - 1], args[pivot]); _b--) { // data[_b] == pivot
                         }
-                        for (; _a < _b && comparator.isLessThan(data, args[_a], args[pivot]); _a++) { // data[_a] < pivot
+                        for (; _a < _b && lt.test(data, args[_a], args[pivot]); _a++) { // data[_a] < pivot
                         }
                         if (_a >= _b) {
                             break;
@@ -559,10 +609,10 @@ public final class GoSort {
             // Avoiding recursion on the larger subproblem guarantees
             // a stack depth of at most lg(b-a).
             if (mlo - a < b - mhi) {
-                quickSort(args, data, comparator, a, mlo, maxDepth);
+                quickSort(args, data, lt, a, mlo, maxDepth);
                 a = mhi; // i.e., quickSort(data, mhi, b)
             } else {
-                quickSort(args, data, comparator, mhi, b, maxDepth);
+                quickSort(args, data, lt, mhi, b, maxDepth);
                 b = mlo; // i.e., quickSort(data, a, mlo)
             }
         }
@@ -570,11 +620,11 @@ public final class GoSort {
             // Do ShellSort pass with gap 6
             // It could be written in this simplified form cause b-a <= 12
             for (int i = a + 6; i < b; ++i) {
-                if (comparator.isLessThan(data, args[i], args[i - 6])) {
+                if (lt.test(data, args[i], args[i - 6])) {
                     Sorts.swap(args, i, i - 6);
                 }
             }
-            insertionSort(args, data, comparator, a, b);
+            insertionSort(args, data, lt, a, b);
         }
     }
 

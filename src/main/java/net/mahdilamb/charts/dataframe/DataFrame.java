@@ -20,6 +20,7 @@ import static net.mahdilamb.charts.dataframe.utils.StringUtils.getStringFromClip
  * Datasets are a series of named series. They can be thought of as a table.
  */
 public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
+
     /**
      * The default quote character to use when reading a text file
      */
@@ -208,11 +209,6 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
 
     <S extends Comparable<S>> DataFrame filter(String series, Predicate<S> test);
 
-    default DataFrame filter(Function<DataFrame, BooleanSeries> filter) {
-        return filter(filter.apply(this));
-    }
-
-
     /**
      * Perform a simple query on the dataframe. Currently only supports single equality operators
      *
@@ -221,6 +217,13 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     DataFrame query(final String query);
 
+    /**
+     * Sort the data frame by a column
+     *
+     * @param index     the index of the column
+     * @param ascending whether to sort ascending
+     * @return a view of the dataframe, sorted by the series at the index
+     */
     DataFrame sortBy(final int index, boolean ascending);
 
     DataFrame sortBy(final String name, boolean ascending);
@@ -229,9 +232,11 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
         return sortBy(index, true);
     }
 
-    default DataFrame sortBy(final String name){
+    default DataFrame sortBy(final String name) {
         return sortBy(name, true);
     }
+
+    Iterable<DataFrame> groupBy(final String name);
 
     /**
      * Get the series at the specified index

@@ -9,10 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
@@ -26,7 +23,7 @@ import static net.mahdilamb.charts.dataframe.utils.StringUtils.iterateLine;
  */
 //TODO filter without intermediate boolean series
 abstract class DataFrameImpl implements DataFrame {
-    enum HistoryType {
+    private enum HistoryType {
         SORT_BY,
         SORT_BY_DESC,
         FILTER;
@@ -46,62 +43,35 @@ abstract class DataFrameImpl implements DataFrame {
         }
     }
 
+    static boolean TRACK_CHANGES = true;
     Map<HistoryType, StringBuilder> toStringData;
     /**
      * The prefix to use for unnamed columns
      */
-    static String EMPTY_COLUMN_PREFIX = "Col$";
+    static final String EMPTY_COLUMN_PREFIX = "Col$";
     /**
      * The maximum number of rows to display in the {@link #toString()} method
      */
-    static int MAX_DISPLAY_ROWS = 25;
+    static final int MAX_DISPLAY_ROWS = 25;
     /**
      * The maximum number of columns to display in the {@link #toString()} method
      */
-    static int MAX_DISPLAY_COLUMNS = 11;
+    static final int MAX_DISPLAY_COLUMNS = 11;
     /**
      * The minimum width of a row when printing
      */
-    static int MIN_WIDTH = 4;
+    static final int MIN_WIDTH = 4;
     /**
      * The maximum width of a row when printing
      */
-    static int MAX_WIDTH = 12;
+    static final int MAX_WIDTH = 12;
     /**
      * The string used to separate columns
      */
-    static String COLUMN_SEPARATOR = "  ";
+    static final String COLUMN_SEPARATOR = "  ";
 
-    static String SKIP_ROWS = "...";
-    static String SKIP_COLUMNS = "...";
-
-    public static final class DataFrameGroupBy {
-        public int column;
-        private DataFrame dataFrame;
-        private GroupBy<?> groups;
-
-        DataFrameGroupBy(final DataFrame data, int series) {
-            this.column = series;
-            this.dataFrame = data;
-            switch (data.getType(series)) {
-                case DOUBLE:
-                    this.groups = new GroupBy<>(data.getDoubleSeries(series), data.size(Axis.INDEX));
-                    break;
-                case LONG:
-                    this.groups = new GroupBy<>(data.getLongSeries(series), data.size(Axis.INDEX));
-                    break;
-                case STRING:
-                    this.groups = new GroupBy<>(data.getStringSeries(series), data.size(Axis.INDEX));
-                    break;
-                case BOOLEAN:
-                    this.groups = new GroupBy<>(data.getBooleanSeries(series), data.size(Axis.INDEX));
-                    break;
-                default:
-                    throw new UnsupportedOperationException();
-            }
-        }
-
-    }
+    static final String SKIP_ROWS = "...";
+    static final String SKIP_COLUMNS = "...";
 
     static final class DataFrameView extends DataFrameImpl {
         //todo hashmap series names
@@ -193,6 +163,7 @@ abstract class DataFrameImpl implements DataFrame {
         @Override
         @SuppressWarnings("unchecked")
         public Series<Comparable<Object>> get(int series) {
+            //todo bounds check
             series = cols == null ? series : cols[series];
             if (numRows == -1 && numCols == -1) {
                 return dataFrame.get(series);
@@ -243,8 +214,128 @@ abstract class DataFrameImpl implements DataFrame {
                     return numSeries() == 0 ? 0 : (numRows != -1 ? numRows : get(0).size());
             }
         }
+
+        @Override
+        protected DataFrame getSource() {
+            return dataFrame;
+        }
     }
 
+    static final class DataFrameGroupBy implements Iterable<DataFrame> {
+
+        private final GroupBy<?> groupBy;
+        private final DataFrame dataFrame;
+        private final String grouping;
+
+        Group[] groups;
+
+        int[] getIndices(int index) {
+            final int[] indices = new int[groupBy.getGroup(index).size()];
+            for (int i = 0; i < indices.length; ++i) {
+                indices[i] = groupBy.getGroup(index).get(i);
+            }
+            return indices;
+        }
+
+        static String formatName(DataFrameGroupBy groupBy, int index) {
+            //TODO merge multiple groupings
+            return String.format("%s {%s: \"%s\"}", groupBy.dataFrame.getName(), groupBy.grouping, groupBy.groupBy.getGroup(index).get());
+        }
+
+        static final class Group extends DataFrameImpl {
+            //TODO by name
+            private final int index;
+            private final DataFrameGroupBy groupBy;
+            Series<?>[] series;
+            int[] indices;
+
+            public Group(DataFrameGroupBy groupBy, int index) {
+                super(formatName(groupBy, index));
+                this.groupBy = groupBy;
+                this.index = index;
+            }
+
+            @Override
+            public int numSeries() {
+                return groupBy.dataFrame.numSeries();
+            }
+
+            private int[] getIndices() {
+                if (indices == null) {
+                    indices = groupBy.getIndices(index);
+                }
+                return indices;
+
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public Series<Comparable<Object>> get(int series) {
+                if (this.series == null) {
+                    this.series = new Series[numSeries()];
+                }
+                //TODO make these kind of blocks more maintainable
+                if (this.series[series] == null) {
+                    switch (groupBy.dataFrame.get(series).getType()) {
+                        case LONG:
+                            this.series[series] = new SeriesImpl.SeriesView<>(groupBy.dataFrame.getLongSeries(series), getIndices());
+                            break;
+                        case BOOLEAN:
+                            this.series[series] = new SeriesImpl.SeriesView<>(groupBy.dataFrame.getBooleanSeries(series), getIndices());
+                            break;
+                        case DOUBLE:
+                            this.series[series] = new SeriesImpl.SeriesView<>(groupBy.dataFrame.getDoubleSeries(series), getIndices());
+                            break;
+                        case STRING:
+                            this.series[series] = new SeriesImpl.SeriesView<>(groupBy.dataFrame.getStringSeries(series), getIndices());
+                            break;
+                        default:
+                            throw new UnsupportedOperationException();
+                    }
+                }
+                return (Series<Comparable<Object>>) this.series[series];
+            }
+
+            @Override
+            protected DataFrame getSource() {
+                return groupBy.dataFrame;
+            }
+        }
+
+        public DataFrameGroupBy(DataFrame dataFrame, final String grouping, final GroupBy<?> groupBy) {
+            this.groupBy = groupBy;
+            this.dataFrame = dataFrame;
+            this.grouping = grouping;
+        }
+
+        private Group getGroup(int index) {
+            if (groups == null) {
+                groups = new Group[groupBy.numGroups()];
+            }
+            if (groups[index] == null) {
+                groups[index] = new Group(this, index);
+            }
+            return groups[index];
+        }
+
+        @Override
+        public Iterator<DataFrame> iterator() {
+
+            return new Iterator<DataFrame>() {
+                private int i = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return i < groupBy.numGroups();
+                }
+
+                @Override
+                public DataFrame next() {
+                    return getGroup(i++);
+                }
+            };
+        }
+    }
 
     /**
      * Dataset from an array of series
@@ -307,7 +398,6 @@ abstract class DataFrameImpl implements DataFrame {
      */
     private final String name;
 
-    protected DataFrameGroupBy groupBy;
 
     /**
      * Create an abstract named dataset
@@ -735,15 +825,6 @@ abstract class DataFrameImpl implements DataFrame {
         }
     }
 
-    /*
-                @Override
-                public DataFrameGroupBy groupBy(int column) {
-                    if (groupBy == null || groupBy.column != column) {
-                        groupBy = new DataFrameGroupBy(this, column);
-                    }
-                    return groupBy;
-                }
-            */
     static int[] range(int start, int end) {
         return range(new int[end - start], start, end);
     }
@@ -787,16 +868,44 @@ abstract class DataFrameImpl implements DataFrame {
         if (getClass() == DataFrameView.class) {
             ids = ((DataFrameView) this).rows == null ? range(0, size(Axis.INDEX)) : ((DataFrameView) this).rows;
             numIds = ((DataFrameView) this).numRows == -1 ? size(Axis.INDEX) : ((DataFrameView) this).numRows;
+        } else if (getClass() == DataFrameGroupBy.Group.class) {
+            numIds = size(Axis.INDEX);
+            ids = new int[numIds];
+
+            for (int i = 0; i < numIds; ++i) {
+                ids[i] = this.get(0).getID(i);
+            }
+
+
         } else {
             ids = range(0, size(Axis.INDEX));
             numIds = ids.length;
         }
         series.sortArgs(ids, numIds, ascending);
-        getHistory().put(ascending ? HistoryType.SORT_BY : HistoryType.SORT_BY_DESC, new StringBuilder(series.getName()));
-        return this.getClass() == DataFrameView.class ? new DataFrameView(this, ((DataFrameView) this).cols, ((DataFrameView) this).numCols, ids, numIds) : new DataFrameView(this, ids, numIds);
+        if (TRACK_CHANGES) {
+            getHistory().put(ascending ? HistoryType.SORT_BY : HistoryType.SORT_BY_DESC, new StringBuilder(series.getName()));
+        }
+        if (getClass() == DataFrameView.class) {
+            return new DataFrameView(getSource(), ((DataFrameView) this).cols, ((DataFrameView) this).numCols, ids, numIds);
+        } else if (getClass() == DataFrameGroupBy.Group.class) {
+            //TODO simplify
+            DataFrame df = this;
+            while (df.getClass() == DataFrameGroupBy.Group.class || df.getClass() == DataFrameView.class) {
+                if (df.getClass() == DataFrameGroupBy.Group.class) {
+                    df = ((DataFrameGroupBy.Group) df).groupBy.dataFrame;
+                } else {
+                    df = ((DataFrameView) df).dataFrame;
+                }
+            }
+            return new DataFrameView(df, ids, numIds);
+        }
+        return new DataFrameView(getSource(), ids, numIds);
     }
 
     private void addFilter(final Series<?> series) {
+        if (!TRACK_CHANGES) {
+            return;
+        }
         final StringBuilder sn = getHistory().get(HistoryType.FILTER);
         if (sn == null) {
             getHistory().put(HistoryType.FILTER, new StringBuilder(series.getName()));
@@ -807,11 +916,20 @@ abstract class DataFrameImpl implements DataFrame {
 
     @Override
     public DataFrame sortBy(int index, boolean ascending) {
-        return sortBySeries((SeriesImpl<?>) get(index), ascending);
+        return sortBySeries((SeriesImpl<?>) DataFrameView.extract(this).get(index), ascending);
     }
 
     @Override
     public DataFrame sortBy(String name, boolean ascending) {
-        return sortBySeries((SeriesImpl<?>) get(name), ascending);
+        return sortBySeries((SeriesImpl<?>) DataFrameView.extract(this).get(name), ascending);
+    }
+
+    protected DataFrame getSource() {
+        return this;
+    }
+
+    @Override
+    public Iterable<DataFrame> groupBy(String name) {
+        return new DataFrameGroupBy(this, get(name).getName(), new GroupBy<>(get(name)));
     }
 }

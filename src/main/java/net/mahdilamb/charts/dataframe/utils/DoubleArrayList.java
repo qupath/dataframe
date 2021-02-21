@@ -47,7 +47,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      */
     public void add(double value, int index) {
         if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException(index);
         }
         if (size == arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
@@ -184,7 +184,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      */
     public double get(int index) {
         if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException(index);
         }
         return arr[index];
     }
