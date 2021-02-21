@@ -233,6 +233,8 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
         return sortBy(name, true);
     }
 
+    Iterable<DataFrame> groupBy(final String name);
+
     /**
      * Get the series at the specified index
      *

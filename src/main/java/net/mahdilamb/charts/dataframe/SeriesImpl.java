@@ -1,7 +1,11 @@
 package net.mahdilamb.charts.dataframe;
 
-import net.mahdilamb.charts.dataframe.utils.*;
+import net.mahdilamb.charts.dataframe.utils.GroupBy;
+import net.mahdilamb.charts.dataframe.utils.IntroSort;
+import net.mahdilamb.charts.dataframe.utils.IteratorUtils;
+import net.mahdilamb.charts.dataframe.utils.StringUtils;
 
+import java.util.Iterator;
 import java.util.function.*;
 
 import static net.mahdilamb.charts.dataframe.DataFrameImpl.COLUMN_SEPARATOR;
@@ -52,7 +56,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
         }
     }
 
@@ -86,7 +90,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
         }
     }
 
@@ -118,7 +122,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -143,7 +147,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getDouble, ascending);
+            IntroSort.argSort(args, size, this::getDouble, ascending);
         }
     }
 
@@ -172,7 +176,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getLong, ascending);
+            IntroSort.argSort(args, size, this::getLong, ascending);
 
         }
     }
@@ -218,7 +222,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -261,7 +265,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, size, data, ascending);
 
         }
     }
@@ -285,7 +289,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getDouble, ascending);
+            IntroSort.argSort(args, size, this::getDouble, ascending);
 
         }
     }
@@ -310,7 +314,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            GoSort.argSort(args, size, this::getBoolean, ascending);
+            IntroSort.argSort(args, size, this::getBoolean, ascending);
 
         }
     }
@@ -414,6 +418,24 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
             }
             this.numRows = numRows;
         }
+
+        public SeriesView(Series<T> dataSeries, Iterable<Integer> ids, int numRows) {
+            //TODO cleanup
+            super(dataSeries.getName());
+            if (dataSeries instanceof SeriesView) {
+                this.dataSeries = ((SeriesView<T>) dataSeries).dataSeries;
+            } else {
+                this.dataSeries = dataSeries;
+            }
+            rows = new int[numRows];
+            int i = 0;
+            Iterator<Integer> it = ids.iterator();
+            for (; i < numRows && it.hasNext(); ++i) {
+                rows[i] = dataSeries.getID(it.next());
+            }
+            this.numRows = i;
+        }
+
 
         public SeriesView(Series<T> dataSeries, int[] ids) {
             this(dataSeries, ids, ids.length);

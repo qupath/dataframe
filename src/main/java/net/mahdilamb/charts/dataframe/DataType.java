@@ -219,7 +219,6 @@ public enum DataType {
         this.matcher = matcher;
     }
 
-
     @Override
     public String toString() {
         return super.toString().toLowerCase();
