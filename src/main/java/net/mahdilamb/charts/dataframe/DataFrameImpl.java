@@ -871,12 +871,9 @@ abstract class DataFrameImpl implements DataFrame {
         } else if (getClass() == DataFrameGroupBy.Group.class) {
             numIds = size(Axis.INDEX);
             ids = new int[numIds];
-
             for (int i = 0; i < numIds; ++i) {
                 ids[i] = this.get(0).getID(i);
             }
-
-
         } else {
             ids = range(0, size(Axis.INDEX));
             numIds = ids.length;
@@ -890,11 +887,13 @@ abstract class DataFrameImpl implements DataFrame {
         } else if (getClass() == DataFrameGroupBy.Group.class) {
             //TODO simplify
             DataFrame df = this;
-            while (df.getClass() == DataFrameGroupBy.Group.class || df.getClass() == DataFrameView.class) {
+            while (true ) {
                 if (df.getClass() == DataFrameGroupBy.Group.class) {
                     df = ((DataFrameGroupBy.Group) df).groupBy.dataFrame;
-                } else {
+                } else if(df.getClass() == DataFrameView.class){
                     df = ((DataFrameView) df).dataFrame;
+                }else{
+                    break;
                 }
             }
             return new DataFrameView(df, ids, numIds);
