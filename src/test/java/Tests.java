@@ -1,4 +1,4 @@
-import net.mahdilamb.charts.dataframe.DataFrame;
+import net.mahdilamb.dataframe.DataFrame;
 import org.junit.Test;
 
 import java.awt.datatransfer.UnsupportedFlavorException;
