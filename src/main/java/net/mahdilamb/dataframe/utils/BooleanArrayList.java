@@ -2,14 +2,13 @@ package net.mahdilamb.dataframe.utils;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.PrimitiveIterator;
 
 /**
  * Array list backed by an array of primitive doubles
  */
-public final class DoubleArrayList implements Iterable<Double> {
+public final class BooleanArrayList implements Iterable<Boolean> {
     static final int INITIAL_CAPACITY = 8;
-    private double[] arr;
+    private boolean[] arr;
     private int size;
 
     /**
@@ -17,8 +16,8 @@ public final class DoubleArrayList implements Iterable<Double> {
      *
      * @param initialCapacity the initial capacity
      */
-    public DoubleArrayList(int initialCapacity) {
-        arr = new double[initialCapacity];
+    public BooleanArrayList(int initialCapacity) {
+        arr = new boolean[initialCapacity];
     }
 
     /**
@@ -26,7 +25,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      *
      * @param values the values to use
      */
-    public DoubleArrayList(double... values) {
+    public BooleanArrayList(boolean... values) {
         arr = values;
         size = values.length;
     }
@@ -34,7 +33,7 @@ public final class DoubleArrayList implements Iterable<Double> {
     /**
      * Create an empty array list with the default initial capacity
      */
-    public DoubleArrayList() {
+    public BooleanArrayList() {
         this(INITIAL_CAPACITY);
     }
 
@@ -44,13 +43,11 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param value the value to add
      * @param index the index to add to
      */
-    public void add(double value, int index) {
+    public void add(boolean value, int index) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
-        if (size == arr.length) {
-            arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
-        }
+        ensureCapacity(arr.length + 1);
         arr[index] = value;
         ++size;
     }
@@ -60,45 +57,52 @@ public final class DoubleArrayList implements Iterable<Double> {
      *
      * @param value the value to add
      */
-    public void add(double value) {
+    public void add(boolean value) {
         add(value, size);
     }
 
-    public void addAll(double... values) {
+    public void addAll(boolean... values) {
         if (size < arr.length + values.length) {
-            arr = Arrays.copyOf(arr, arr.length + Math.max(values.length, arr.length >>> 1));
+            ensureCapacity(arr.length + values.length);
         }
         System.arraycopy(values, 0, arr, size, values.length);
         size += values.length;
+    }
+
+    void ensureCapacity(int newLength) {
+        if (size < newLength) {
+            arr = Arrays.copyOf(arr, Math.max(newLength, arr.length >>> 1));
+        }
     }
 
     @Override
     public int hashCode() {
         int result = 1;
         for (int i = 0; i < size; ++i) {
-            long bits = Double.doubleToLongBits(arr[i]);
-            result = 31 * result + (int) (bits ^ (bits >>> 32));
+            result = 31 * result + (arr[i] ? 1231 : 1237);
         }
         return result;
     }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
-        if (!(obj instanceof DoubleArrayList)) {
+        if (!(obj instanceof BooleanArrayList)) {
             return false;
         }
-        if (((DoubleArrayList) obj).size != size()) {
+        if (((BooleanArrayList) obj).size != size()) {
             return false;
         }
         for (int i = 0; i < size; ++i) {
-            if (arr[i] != ((DoubleArrayList) obj).arr[i]) {
+            if (arr[i] != ((BooleanArrayList) obj).arr[i]) {
                 return false;
             }
         }
         return true;
     }
+
     @Override
     public String toString() {
         if (size == 0) {
@@ -141,7 +145,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param value the value
      * @return the index of the value
      */
-    public int indexOf(double value) {
+    public int indexOf(boolean value) {
         for (int i = 0; i < size; ++i) {
             if (arr[i] == value) {
                 return i;
@@ -156,7 +160,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param value the value to get
      * @return the last index of the given value, or -1 if not present
      */
-    public int lastIndexOf(double value) {
+    public int lastIndexOf(boolean value) {
         for (int i = size - 1; i >= 0; --i) {
             if (arr[i] == value) {
                 return i;
@@ -171,7 +175,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param value the value to test
      * @return whether the value is contained in the array list
      */
-    public boolean contains(double value) {
+    public boolean contains(boolean value) {
         return indexOf(value) != -1;
     }
 
@@ -181,11 +185,24 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param index the index
      * @return the value at the index
      */
-    public double get(int index) {
+    public boolean get(int index) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
         return arr[index];
+    }
+
+    public void set(int index, boolean value) {
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException(index);
+        }
+        arr[index] = value;
+    }
+
+    public void fill(boolean value, int n) {
+        ensureCapacity(n);
+        Arrays.fill(arr, 0, n, value);
+        this.size = Math.max(size, n);
     }
 
     /**
@@ -203,8 +220,8 @@ public final class DoubleArrayList implements Iterable<Double> {
     }
 
     @Override
-    public Iterator<Double> iterator() {
-        return new PrimitiveIterator.OfDouble() {
+    public Iterator<Boolean> iterator() {
+        return new PrimitiveIterators.OfBoolean() {
             private int i = 0;
 
             @Override
@@ -213,7 +230,7 @@ public final class DoubleArrayList implements Iterable<Double> {
             }
 
             @Override
-            public double nextDouble() {
+            public boolean nextBoolean() {
                 return arr[i++];
             }
         };

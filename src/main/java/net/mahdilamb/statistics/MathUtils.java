@@ -197,5 +197,23 @@ public final strictfp class MathUtils {
         return (v & 1) == 0;
     }
 
+    /**
+     * Perform summation using Kahan summation to improve accuracy in floating path math
+     *
+     * @param values the values
+     * @return the
+     */
+    public static double kahanSummation(double... values) {
+        double accum = 0.0;
+        double c = 0.0;
+        for (double v : values) {
+            double y = v - c;
+            double t = accum + y;
+            c = (t - accum) - y;
+            accum = t;
+        }
+        return accum;
+    }
+
 }
 

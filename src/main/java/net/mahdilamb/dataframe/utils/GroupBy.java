@@ -3,6 +3,7 @@ package net.mahdilamb.dataframe.utils;
 import net.mahdilamb.dataframe.functions.BiDoublePredicate;
 import net.mahdilamb.dataframe.functions.BiIntConsumer;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -292,6 +293,24 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
         return array;
     }
 
+    /**
+     * Get an array containing the factors as doubles
+     *
+     * @param array the array
+     * @return the array, if the size is less than the number of indices. Or a new array otherwise
+     */
+    public double[] toMeltedArray(double[] array) {
+        if (array == null || array.length < size()) {
+            array = new double[size()];
+        }
+        for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
+            for (final int j : e.getValue()) {
+                array[j] = e.getValue().getID();
+            }
+        }
+        return array;
+    }
+
     @SuppressWarnings("unchecked")
     public T[] toMeltedArray(T[] array) {
         if (array == null || array.length < size()) {
@@ -316,5 +335,21 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
             }
         }
         return out;
+    }
+
+    /**
+     * Get the unique groups
+     *
+     * @return an array of the groups
+     */
+    @SuppressWarnings("unchecked")
+    public T[] getGroups(T[] groups) {
+        if ( groups.length < size()) {
+            groups = (T[]) Array.newInstance(groups.getClass().getComponentType(), numGroups());
+        }
+        for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
+            groups[e.getValue().getID()] = e.getValue().get();
+        }
+        return groups;
     }
 }
