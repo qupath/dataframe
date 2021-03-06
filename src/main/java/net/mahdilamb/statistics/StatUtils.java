@@ -3,6 +3,7 @@ package net.mahdilamb.statistics;
 import net.mahdilamb.statistics.distributions.SummaryStatistics;
 
 import java.util.Arrays;
+import java.util.function.IntToDoubleFunction;
 import java.util.function.ToDoubleFunction;
 
 import static java.lang.Math.abs;
@@ -1447,16 +1448,19 @@ public strictfp final class StatUtils {
             final double[] temp = new double[blocks == 0 ? n : 65536];
             System.arraycopy(data, rangeMin, temp, 0, rangeMax - rangeMin);
 
-            final int[] indices = ArrayUtils.mapToInt(temp, v -> (int) ((v - binEdges[0]) * norm));
-            ArrayUtils.where(indices, j -> j == nEqualBins, j -> j - 1, indices);
-            final boolean[] decrement = ArrayUtils.mapToBool(a -> a < binEdges[0], ArrayUtils.subset(indices, binEdges));
-
-            for (int j = 0; j < temp.length; ++j) {
-                if (decrement[j]) {
-                    indices[j] -= 1;
+            final int[] indices = new int[temp.length];
+            for (int a = 0; a < indices.length; ++a) {
+                indices[a] = (int) ((temp[a] - binEdges[0]) * norm);
+                if (indices[a] == nEqualBins) {
+                    --indices[a];
                 }
-                if ((temp[j] > binEdges[nEqualBins]) & (indices[j] != nEqualBins - 1)) {
-                    indices[j] += 1;
+            }
+            for (int j = 0; j < temp.length; ++j) {
+                if (temp[j] < binEdges[indices[j]]) {
+                    --indices[j];
+                }
+                if ((temp[j] >= binEdges[indices[j] + 1]) & (indices[j] != nEqualBins - 1)) {
+                    ++indices[j];
                 }
             }
             binCount(out.getCount(), indices);
@@ -1523,5 +1527,6 @@ public strictfp final class StatUtils {
         out.density = toDensity(out);
         return out;
     }
+
 
 }

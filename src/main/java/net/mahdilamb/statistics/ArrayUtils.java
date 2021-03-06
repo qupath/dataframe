@@ -1,7 +1,6 @@
 package net.mahdilamb.statistics;
 
 
-
 import net.mahdilamb.dataframe.functions.BooleanBinaryOperator;
 
 import java.util.Arrays;
@@ -400,6 +399,16 @@ public final strictfp class ArrayUtils {
         Arrays.fill(out, value);
         return out;
     }
+
+    public static double[][] full(double[][] out, DoubleSupplier supplier) {
+        for (int i = 0; i < out.length; ++i) {
+            for (int j = 0; j < out[i].length; ++j) {
+                out[i][j] = supplier.getAsDouble();
+            }
+        }
+        return out;
+    }
+
 
     public static int[] full(final int value, int n) {
         final int[] out = new int[n];

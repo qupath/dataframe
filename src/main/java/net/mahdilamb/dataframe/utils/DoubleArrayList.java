@@ -81,6 +81,7 @@ public final class DoubleArrayList implements Iterable<Double> {
         }
         return result;
     }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
@@ -99,6 +100,7 @@ public final class DoubleArrayList implements Iterable<Double> {
         }
         return true;
     }
+
     @Override
     public String toString() {
         if (size == 0) {
@@ -219,4 +221,7 @@ public final class DoubleArrayList implements Iterable<Double> {
         };
     }
 
+    public double[] toArray() {
+        return Arrays.copyOf(arr, size);
+    }
 }
