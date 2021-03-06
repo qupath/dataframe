@@ -215,5 +215,199 @@ public final strictfp class MathUtils {
         return accum;
     }
 
+    /**
+     * Perform summation using the Kahan-Neumaier summation
+     *
+     * @param values the values to sum
+     * @return the sum of the values
+     */
+    public static double neumaierSum(double... values) {
+        double accum = values[0];
+        double t, c = 0;
+        int i;
+        for (i = 1; i < values.length; i++) {
+            t = accum + values[i];
+            if (Math.abs(accum) >= Math.abs(values[i])) {
+                c += (accum - t) + values[i];
+            } else {
+                c += (values[i] - t) + accum;
+            }
+            accum = t;
+        }
+        return accum + c;
+    }
+
+    /**
+     * Perform summation using the "iterative Kahan–Babuška algorithm" proposed by Klein
+     *
+     * @param values the values to sum
+     * @return the sum of the values
+     */
+    public static double kleinSum(double... values) {
+        double s = 0, c, cc, cs = 0, ccs = 0, t;
+        for (double value : values) {
+            t = s + value;
+            if (Math.abs(s) >= Math.abs(value)) {
+                c = (s - t) + value;
+            } else {
+                c = (value - t) + s;
+            }
+            s = t;
+            t = cs + c;
+            if (Math.abs(cs) >= Math.abs(c)) {
+                cc = (cs - t) + c;
+            } else {
+                cc = (c - t) + cs;
+            }
+            cs = t;
+            ccs = ccs + cc;
+        }
+        return s + cs + ccs;
+    }
+
+    static int NUM_PARTIALS = 32;
+
+    /**
+     * fsum modified from <a href="https://github.com/nlmixrdevelopment/PreciseSums">PreciseSums</>
+     *
+     * @param values the values to sum
+     * @return this sum of the values
+     */
+    public static double fsum(double... values) {
+        int m = NUM_PARTIALS;
+        double[] p = new double[m];
+        double x, y, t;
+        double xsave, special_sum = 0.0, inf_sum = 0.0, sum = 0.0;
+        double hi, yr, lo = 0;
+        int ix, i, j, n = 0;//, m = NUM_PARTIALS;
+        //double *p = Calloc(NUM_PARTIALS, double);
+        // for x in input
+        for (ix = 0; ix < values.length; ix++) {
+            x = values[ix];
+            xsave = x;
+            for (i = j = 0; j < n; j++) {
+                y = p[j];
+                if (Math.abs(x) < Math.abs(y)) {
+                    t = x;
+                    x = y;
+                    y = t;
+                }
+                hi = x + y;
+                yr = hi - x;
+                lo = y - yr;
+                if (lo != 0.0)
+                    p[i++] = lo;
+                x = hi;
+            }
+
+            n = i;
+            if (x != 0.0) {
+                if (!Double.isFinite(x)) {
+                    /*
+                    a nonfinite x could arise either as
+                   a result of intermediate overflow, or
+                   as a result of a nan or inf in the
+                   summands */
+                    if (Double.isFinite(xsave) || Double.isNaN(xsave)) {
+                        System.err.println("intermediate overflow in fsum");
+                        return kleinSum(values);
+                    } else {
+                        inf_sum += xsave;
+                    }
+                    special_sum += xsave;
+                    /* reset partials */
+                    n = 0;
+                } else {
+                    if (m > 0 && n >= m) {
+                        //&& _fsum_realloc(&p, n, ps, &m)
+                        // Doubles the size of array.
+                        m += m;
+                        p = new double[m];
+                    } else if (m < 0 && n >= -m) {
+                        System.err.println("The size of the saved partials is too small to calculate the sum.");
+                        return kleinSum(values);
+                    }
+                    p[n++] = x;
+                }
+            }
+        }
+        if (special_sum != 0.0) {
+            if (Double.isNaN(inf_sum)) {
+                System.err.println("-inf + inf in fsum");
+                return Double.NaN;
+            }
+            sum = special_sum;
+            return sum;
+        }
+
+        hi = 0.0;
+        if (n > 0) {
+            hi = p[--n];
+    /* sum_exact(ps, hi) from the top, stop when the sum becomes
+       inexact. */
+            while (n > 0) {
+                x = hi;
+                y = p[--n];
+                if (Math.abs(y) >= Math.abs(x)) {
+                    return kleinSum(values);
+                    /* Rprintf("Partial Sums:\n"); */
+                    /* for (i = 0; i < j; i++){ */
+                    /*   Rprintf("p[%d] = %f\n",i,p[i]); */
+                    /* } */
+                    /* Rprintf("Assertion Error:\n"); */
+                    /* Rprintf("fabs(y) >= fabs(x) or %f >= %f\n",fabs(y),fabs(x)); */
+                    /* if (m > 0) Free(p); */
+                    /* error("Error in parital sums."); */
+                }
+                hi = x + y;
+                yr = hi - x;
+                lo = y - yr;
+                if (lo != 0.0)
+                    break;
+            }
+    /* Make half-even rounding work across multiple partials.
+       Needed so that sum([1e-16, 1, 1e16]) will round-up the last
+       digit to two instead of down to zero (the 1e-16 makes the 1
+       slightly closer to two).  With a potential 1 ULP rounding
+       error fixed-up, math.fsum() can guarantee commutativity. */
+            if (n > 0 && ((lo < 0.0 && p[n - 1] < 0.0) ||
+                    (lo > 0.0 && p[n - 1] > 0.0))) {
+                y = lo * 2.0;
+                x = hi + y;
+                yr = x - hi;
+                if (y == yr)
+                    hi = x;
+            }
+        }
+        sum = hi;
+        return sum;
+    }
+
+    static int sign(double v) {
+        return v < 0 ? -1 : v == 0 ? 0 : 1;
+    }
+
+    static double logifiedProduct(double[] input, double[] p) {
+        double s = 1.0;
+        for (int i = 0; i < input.length; i++) {
+            if (input[i] == 0) {
+                return 0.0;
+            }
+            s *= sign(input[i]);
+            p[i] = Math.log(Math.abs(input[i]));
+        }
+        s = Math.exp(kleinSum(p)) * s;
+        return s;
+    }
+
+    /**
+     * Calculate the product using the logs as temporaries. Adapted from <a href="https://github.com/nlmixrdevelopment/PreciseSums">PreciseSums</>
+     *
+     * @param input the values to multiply
+     * @return the product of the values
+     */
+    public static double logifiedProduct(double... input) {
+        return logifiedProduct(input, new double[input.length]);
+    }
 }
 

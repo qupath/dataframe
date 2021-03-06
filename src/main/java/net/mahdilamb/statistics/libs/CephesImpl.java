@@ -9281,7 +9281,7 @@ strictfp final class CephesImpl {
                 this.newn = n;
 
                 /* double pkp1; */
-                double  kf = 0;
+                double kf = 0;
                 int nflag;
                 int miniter, maxiter;
 
@@ -9596,7 +9596,7 @@ strictfp final class CephesImpl {
 
         static final double BIG = 1.44115188075855872E+17;
 
-        static double jv(double v, double x) throws DomainException, OverflowException,LossException,UnderflowException {
+        static double jv(double v, double x) throws DomainException, OverflowException, LossException, UnderflowException {
             return new JV().get(v, x);
         }
 

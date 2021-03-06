@@ -1,6 +1,8 @@
 package net.mahdilamb.statistics.libs;
 
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class Libs {
     private Libs() {
     }
@@ -123,7 +125,7 @@ public final class Libs {
      * @param x the value
      * @return the fractional part of the value
      */
-    static double modf(double x) {
+    public static double modf(double x) {
         long mask;
         long i = Double.doubleToRawLongBits(x);
         int e = (int) (i >> 52 & 0x7ff) - 0x3ff;
@@ -160,7 +162,15 @@ public final class Libs {
         return (int) (((i & 0xfffffffffffffL) >> (52 - e)) + (1 << e));
     }
 
-    static double frexp(double x, int[] e) {
+    public static double frexp(double x, int[] e) {
+        if (x == 0. || x == -0.) {
+            e[0] = 0;
+            return x;
+        }
+        if (Double.isInfinite(x) || Double.isNaN(x)) {
+            e[0] = -1;
+            return x;
+        }
         long i = Double.doubleToRawLongBits(x);
         int ee = (int) (i >>> 52 & 0x7ff);
         if (ee == 0) {
