@@ -415,7 +415,7 @@ public strictfp final class StatUtils {
      * @param data the data from which to calculate the sum
      * @return the product of the data
      */
-    public static double product(final double[] data) {
+    public static double product(final double... data) {
         double accum = 1;
         for (final double d : data) {
             accum *= d;

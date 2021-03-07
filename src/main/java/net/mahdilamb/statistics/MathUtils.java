@@ -203,7 +203,7 @@ public final strictfp class MathUtils {
      * @param values the values
      * @return the
      */
-    public static double kahanSummation(double... values) {
+    public static double kahanSum(double... values) {
         double accum = 0.0;
         double c = 0.0;
         for (double v : values) {
@@ -277,7 +277,7 @@ public final strictfp class MathUtils {
         int m = NUM_PARTIALS;
         double[] p = new double[m];
         double x, y, t;
-        double xsave, special_sum = 0.0, inf_sum = 0.0, sum = 0.0;
+        double xsave, special_sum = 0.0, inf_sum = 0.0, sum;
         double hi, yr, lo = 0;
         int ix, i, j, n = 0;//, m = NUM_PARTIALS;
         //double *p = Calloc(NUM_PARTIALS, double);
@@ -383,31 +383,117 @@ public final strictfp class MathUtils {
         return sum;
     }
 
-    static int sign(double v) {
-        return v < 0 ? -1 : v == 0 ? 0 : 1;
-    }
+    /**
+     * Splitter for Veltkamp and Dekker's two product
+     */
+    private static final double SPLITTER = 134217729;
 
-    static double logifiedProduct(double[] input, double[] p) {
-        double s = 1.0;
-        for (int i = 0; i < input.length; i++) {
-            if (input[i] == 0) {
-                return 0.0;
-            }
-            s *= sign(input[i]);
-            p[i] = Math.log(Math.abs(input[i]));
-        }
-        s = Math.exp(kleinSum(p)) * s;
-        return s;
+    private static double[] twoProduct(double a, double b, double[] result) {
+        double x = a * b;
+
+        double c = SPLITTER * a;
+        double abig = c - a;
+        double ahi = c - abig;
+        double alo = a - ahi;
+
+        double d = SPLITTER * b;
+        double bbig = d - b;
+        double bhi = d - bbig;
+        double blo = b - bhi;
+
+        double err1 = x - (ahi * bhi);
+        double err2 = err1 - (alo * bhi);
+        double err3 = err2 - (ahi * blo);
+
+        double y = alo * blo - err3;
+        result[1] = y;
+        result[0] = x;
+        return result;
     }
 
     /**
-     * Calculate the product using the logs as temporaries. Adapted from <a href="https://github.com/nlmixrdevelopment/PreciseSums">PreciseSums</>
+     * Calculate the product of two numbers and the floating point error
      *
-     * @param input the values to multiply
-     * @return the product of the values
+     * @param a value a
+     * @param b value b
+     * @return a two element array {result, error}
      */
-    public static double logifiedProduct(double... input) {
-        return logifiedProduct(input, new double[input.length]);
+    public static double[] twoProduct(double a, double b) {
+        return twoProduct(a, b, new double[2]);
     }
+
+    private static double[] twoProductFMA(double a, double b, double[] result) {
+        double x = a * b;
+        double y = Math.fma(a, b, -x);
+        result[1] = y;
+        result[0] = x;
+        return result;
+    }
+
+    /**
+     * Calculate the product of two numbers and the floating point error.
+     * <p>
+     * This is more efficient on CPUs that contain an FMA unit
+     *
+     * @param a value a
+     * @param b value b
+     * @return a two element array {result, error}
+     */
+    public static double[] twoProductFMA(double a, double b) {
+        return twoProductFMA(a, b, new double[2]);
+    }
+
+    /**
+     * Perform a compensated product of a series of values
+     *
+     * @param a the values
+     * @return the compensated product
+     */
+    public static double compProd(double... a) {
+        double p1 = a[0];
+        double e1 = 0;
+        for (int i = 1; i < a.length; ++i) {
+            double x = p1 * a[i];
+
+            double c = SPLITTER * p1;
+            double abig = c - p1;
+            double ahi = c - abig;
+            double alo = p1 - ahi;
+
+            double d = SPLITTER * a[i];
+            double bbig = d - a[i];
+            double bhi = d - bbig;
+            double blo = a[i] - bhi;
+
+            double err1 = x - (ahi * bhi);
+            double err2 = err1 - (alo * bhi);
+            double err3 = err2 - (ahi * blo);
+
+            double y = alo * blo - err3;
+            p1 = x;
+            e1 = e1 * a[i] + y;
+        }
+        return p1 + e1;
+    }
+
+    /**
+     * Perform a compensated product using the twoProductFMA (i.e. this is
+     * better for CPUs with FMA unit)
+     *
+     * @param a the values
+     * @return the product of a
+     */
+    public static double compProdFMA(double... a) {
+        double p1 = a[0];
+        double e1 = 0;
+        for (int i = 1; i < a.length; ++i) {
+            double x = p1 * a[i];
+            double y = Math.fma(p1, a[i], -x);
+            p1 = x;
+            e1 = Math.fma(e1, a[i], y);
+        }
+        return p1 + e1;
+    }
+
 }
 
