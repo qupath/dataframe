@@ -62,46 +62,6 @@ public final class IntArrayList implements Iterable<Integer> {
         add(value, size);
     }
 
-    @Override
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < size; ++i) {
-            result = 31 * result + arr[i];
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof IntArrayList)) {
-            return false;
-        }
-        if (((IntArrayList) obj).size != size()) {
-            return false;
-        }
-        for (int i = 0; i < size; ++i) {
-            if (arr[i] != ((IntArrayList) obj).arr[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        if (size == 0) {
-            return "[]";
-        }
-        final StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < size; ++i) {
-            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
-        }
-        return stringBuilder.append(']').toString();
-    }
-
     /**
      * Remove elements between indices
      *
@@ -195,6 +155,46 @@ public final class IntArrayList implements Iterable<Integer> {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 1;
+        for (int i = 0; i < size; ++i) {
+            result = 31 * result + arr[i];
+        }
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof IntArrayList)) {
+            return false;
+        }
+        if (((IntArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((IntArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        if (size == 0) {
+            return "[]";
+        }
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < size; ++i) {
+            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
+        }
+        return stringBuilder.append(']').toString();
     }
 
     @Override

@@ -40,6 +40,11 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<
         return map(el -> Objects.equals(other, el));
     }
 
+    /**
+     * Filter the series
+     * @param filter the boolean series to be used as the filter
+     * @return a view of this series
+     */
     Series<T> filter(BooleanSeries filter);
 
     /**
@@ -60,25 +65,6 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<
         }
         return out;
     }
-    /* todo
-    default T reduce(ToDoubleFunction<T> test) {
-        T current = get(0);
-        double score = test.applyAsDouble(current);
-        T best = current;
-        if (size() > 1) {
-            for (int i = 1; i < size(); ++i) {
-                if (get(i) == null) {
-                    continue;
-                }
-                double t = test.applyAsDouble(get(i));
-                if (t >= score) {
-                    best = get(i);
-                    score = t;
-                }
-            }
-        }
-        return best;
-    }*/
 
     /**
      * Reduce the series down to a external type
@@ -136,6 +122,9 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<
         return out;
     }
 
+    /**
+     * @return this series as a map of the group to the indices they appear in
+     */
     default GroupBy<T> groups() {
         return new GroupBy<>(this);
     }

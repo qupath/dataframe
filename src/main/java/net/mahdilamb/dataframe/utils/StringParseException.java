@@ -1,7 +1,7 @@
 package net.mahdilamb.dataframe.utils;
 
 /**
- * Exception raised when a string has not been parsed
+ * Exception raised when a string has not been parsed correctly
  */
 public class StringParseException extends RuntimeException {
     private static final String prefix = "Error parsing ";

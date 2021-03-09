@@ -5,6 +5,8 @@ import net.mahdilamb.dataframe.utils.IntroSort;
 import net.mahdilamb.dataframe.utils.IteratorUtils;
 import net.mahdilamb.dataframe.utils.StringUtils;
 
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.function.*;
 
 import static net.mahdilamb.dataframe.DataFrameImpl.COLUMN_SEPARATOR;
@@ -16,7 +18,6 @@ import static net.mahdilamb.dataframe.DataFrameImpl.range;
  * @param <T> the type of the elements in the series
  */
 abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesWithFunctionalOperators<T> {
-    static int MAX_VISIBLE_CELLS = 25;
 
     /**
      * Default implementation of a series backed by a double array
@@ -180,7 +181,9 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
     }
 
-
+    /**
+     * A series backed by objects holding Long
+     */
     static final class OfLongArray extends SeriesImpl<Long> implements LongSeries {
         final Long[] data;
 
@@ -226,6 +229,9 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
     }
 
+    /**
+     * A series back by an array of primitive longs
+     */
     static final class OfNonNaNLongArray extends SeriesImpl<Long> implements LongSeries {
         final long[] data;
 
@@ -318,19 +324,10 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
     }
 
-
     private GroupBy<T> group;
     private final String name;
     int start = 0;
     int end;
-
-    @Override
-    public GroupBy<T> groups() {
-        if (group == null) {
-            group = new GroupBy<>(this);
-        }
-        return group;
-    }
 
     /**
      * Create an abstract named series
@@ -356,13 +353,13 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         return index;
     }
 
-    static String formatCell(Series<?> series, int index) {
+    private static String formatCell(Series<?> series, int index) {
         return String.valueOf(series.get(index));
     }
 
     @Override
     public String toString() {
-        return toString(MAX_VISIBLE_CELLS);
+        return toString(DEFAULT_DISPLAY_ROWS);
     }
 
     @Override
@@ -401,13 +398,18 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         return new SeriesView<>(this, test);
     }
 
+    /**
+     * A view into a series
+     *
+     * @param <T> the type of the elements in the series
+     */
     static class SeriesView<T extends Comparable<T>> extends SeriesImpl<T> {
 
         final Series<T> dataSeries;
         int[] rows;
         int numRows;
 
-        public SeriesView(Series<T> dataSeries, int[] ids, int numRows) {
+        SeriesView(Series<T> dataSeries, int[] ids, int numRows) {
             super(dataSeries.getName());
             if (dataSeries instanceof SeriesView) {
                 this.dataSeries = ((SeriesView<T>) dataSeries).dataSeries;
@@ -423,11 +425,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
 
 
-        public SeriesView(Series<T> dataSeries, int[] ids) {
+        SeriesView(Series<T> dataSeries, int[] ids) {
             this(dataSeries, ids, ids.length);
         }
 
-        public SeriesView(Series<T> dataSeries, IntPredicate test) {
+        SeriesView(Series<T> dataSeries, IntPredicate test) {
             super(dataSeries.getName());
             int j = 0;
             int i = 0;
@@ -456,7 +458,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         }
 
-        protected SeriesView(Series<T> dataSeries, int start, int end) {
+        SeriesView(Series<T> dataSeries, int start, int end) {
             this(dataSeries, DataFrameImpl.range(start, end));
         }
 
@@ -492,6 +494,9 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
     }
 
+    /**
+     * A view of a long series
+     */
     static class LongSeriesView extends SeriesView<Long> implements LongSeries {
 
         public LongSeriesView(SeriesView<Long> dataSeries) {
@@ -509,6 +514,9 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         }
     }
 
+    /**
+     * A view of a double series
+     */
     static class DoubleSeriesView extends SeriesView<Double> implements DoubleSeries {
 
         public DoubleSeriesView(SeriesView<Double> dataSeries) {
@@ -522,6 +530,9 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
     }
 
+    /**
+     * A view of a string series
+     */
     static class StringSeriesView extends SeriesView<String> implements StringSeries {
 
         public StringSeriesView(SeriesView<String> dataSeries) {
@@ -530,6 +541,9 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
     }
 
+    /**
+     * A view of boolean series
+     */
     static class BooleanSeriesView extends SeriesView<Boolean> implements BooleanSeries {
 
         public BooleanSeriesView(SeriesView<Boolean> dataSeries) {
@@ -570,5 +584,118 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
         return this instanceof SeriesView ? new SeriesView<>(((SeriesView<T>) this).dataSeries, ids, numIds) : new SeriesView<>(this, ids, numIds);
     }
 
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public StringSeries asString() {
+        switch (getType()) {
+            case STRING:
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.StringSeriesView((SeriesImpl.SeriesView<String>) this) : (StringSeries) this;
+            case BOOLEAN:
+                return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Boolean) el));
+            case LONG:
+                return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Long) el));
+            case DOUBLE:
+                return new SeriesImpl.OfStringArray(this, el -> DataType.toString((Double) el));
+            default:
+                throw new SeriesCastException();
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public DoubleSeries asDouble() {
+        switch (getType()) {
+            case DOUBLE:
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.DoubleSeriesView((SeriesImpl.SeriesView<Double>) this) : (DoubleSeries) this;
+            case BOOLEAN:
+                return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((Boolean) el));
+            case LONG:
+                return new SeriesImpl.OfDoubleArray((Series<Long>) this, DataType::toDouble);
+            case STRING:
+                return new SeriesImpl.OfDoubleArray(this, el -> DataType.toDouble((String) el));
+            default:
+                throw new SeriesCastException();
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public LongSeries asLong() {
+        switch (getType()) {
+            case LONG:
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.LongSeriesView((SeriesImpl.SeriesView<Long>) this) : (LongSeries) this;
+            case DOUBLE:
+                return new SeriesImpl.OfLongArray(this, el -> DataType.toLong((Double) el), v -> !Double.isNaN((Double) v));
+            case BOOLEAN:
+                return new SeriesImpl.OfNonNaNLongArray(this, el -> DataType.toLong((Boolean) el));
+            case STRING:
+                return new SeriesImpl.OfLongArray(this, el -> DataType.toLong((String) el), v -> DataType.LONG.matches((String) v));
+            default:
+                throw new SeriesCastException();
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public BooleanSeries asBoolean() {
+        switch (getType()) {
+            case BOOLEAN:
+                return this.getClass() == SeriesImpl.SeriesView.class ? new SeriesImpl.BooleanSeriesView((SeriesImpl.SeriesView<Boolean>) this) : (BooleanSeries) this;
+            case STRING:
+                return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((String) el));
+            case LONG:
+                return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((Long) el));
+            case DOUBLE:
+                return new SeriesImpl.OfBooleanArray(this, el -> DataType.toBoolean((Double) el));
+            default:
+                throw new SeriesCastException();
+        }
+    }
+
+    @Override
+    public DataFrame frequencies() {
+        final Map<T, Double> map = new Hashtable<>();
+        for (int i = 0; i < size(); ++i) {
+            final Double key = map.get(get(i));
+            if (key == null) {
+                map.put(get(i), 1. / size());
+                continue;
+            }
+            map.put(get(i), key + (1. / size()));
+        }
+        return new DataFrameImpl.OfMap(String.format("Frequencies of %s", getName()), getName(), getType(), "frequencies", DataType.DOUBLE, map);
+
+    }
+
+    @Override
+    public DataFrame valueCounts() {
+        final Map<T, Integer> map = new Hashtable<>();
+        for (int i = 0; i < size(); ++i) {
+            final Integer key = map.get(get(i));
+            if (key == null) {
+                map.put(get(i), 1);
+                continue;
+            }
+            map.put(get(i), key + 1);
+        }
+        return new DataFrameImpl.OfMap(String.format("Counts of %s", getName()), getName(), getType(), "counts", DataType.LONG, map);
+    }
+
+    @Override
+    public GroupBy<T> groups() {
+        if (group == null) {
+            group = new GroupBy<>(this);
+        }
+        return group;
+    }
+
+    /**
+     * Given an array of indices, use the values in this series to sort them
+     *
+     * @param args      the arguments to sort
+     * @param size      the last element
+     * @param ascending whether to sort ascending
+     */
     abstract void sortArgs(int[] args, int size, boolean ascending);
 }

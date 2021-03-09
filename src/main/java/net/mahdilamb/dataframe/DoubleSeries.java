@@ -29,6 +29,22 @@ public interface DoubleSeries extends NumericSeries<Double> {
         return DataType.DOUBLE;
     }
 
+    /**
+     * Convert this array to an array of primitives
+     *
+     * @param output the output array
+     * @return either the output array (if correctly sized) or a new array
+     */
+    default double[] toArray(double[] output) {
+        if (output.length < size()) {
+            output = new double[size()];
+        }
+        for (int i = 0; i < size(); ++i) {
+            output[i] = getDouble(i);
+        }
+        return output;
+    }
+
     @Override
     default PrimitiveIterator.OfDouble iterator() {
         return new PrimitiveIterator.OfDouble() {
@@ -44,16 +60,6 @@ public interface DoubleSeries extends NumericSeries<Double> {
                 return i < size();
             }
         };
-    }
-
-    default double[] toArray(double[] output) {
-        if (output.length < size()) {
-            output = new double[size()];
-        }
-        for (int i = 0; i < size(); ++i) {
-            output[i] = getDouble(i);
-        }
-        return output;
     }
 
 }

@@ -70,6 +70,7 @@ public class UnsortedDoubleSet implements Iterable<Double> {
         return indexOf(value) != -1;
     }
 
+
     private int indexOf(double value) {
         int index = index(value);
         if (data[index] != null) {

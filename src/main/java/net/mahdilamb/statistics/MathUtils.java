@@ -268,7 +268,7 @@ public final strictfp class MathUtils {
     static int NUM_PARTIALS = 32;
 
     /**
-     * fsum modified from <a href="https://github.com/nlmixrdevelopment/PreciseSums">PreciseSums</>
+     * fsum modified from <a href="https://github.com/nlmixrdevelopment/PreciseSums">PreciseSums</a>
      *
      * @param values the values to sum
      * @return this sum of the values

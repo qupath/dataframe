@@ -1,5 +1,8 @@
 package net.mahdilamb.dataframe.utils;
 
+/**
+ * Utility class for working with sorting
+ */
 public final class Sorts {
     private Sorts() {
 

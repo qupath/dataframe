@@ -1,7 +1,6 @@
 package net.mahdilamb.dataframe.utils;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.PrimitiveIterator;
 
 /**
@@ -48,6 +47,11 @@ public final class DoubleArrayList implements Iterable<Double> {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
+        add0(value, index);
+
+    }
+
+    private void add0(double value, int index) {
         if (size == arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
         }
@@ -61,9 +65,14 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param value the value to add
      */
     public void add(double value) {
-        add(value, size);
+        add0(value, size);
     }
 
+    /**
+     * Add all the values to the end of the list
+     *
+     * @param values the values to add
+     */
     public void addAll(double... values) {
         if (size < arr.length + values.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(values.length, arr.length >>> 1));
@@ -72,57 +81,18 @@ public final class DoubleArrayList implements Iterable<Double> {
         size += values.length;
     }
 
-    @Override
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < size; ++i) {
-            long bits = Double.doubleToLongBits(arr[i]);
-            result = 31 * result + (int) (bits ^ (bits >>> 32));
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof DoubleArrayList)) {
-            return false;
-        }
-        if (((DoubleArrayList) obj).size != size()) {
-            return false;
-        }
-        for (int i = 0; i < size; ++i) {
-            if (arr[i] != ((DoubleArrayList) obj).arr[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        if (size == 0) {
-            return "[]";
-        }
-        final StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < size; ++i) {
-            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
-        }
-        return stringBuilder.append(']').toString();
-    }
-
     /**
      * Remove elements between indices
      *
      * @param from the starting index (inclusive)
      * @param to   the ending index (exclusive)
+     * @throws IllegalArgumentException if from is greater than to
      */
     public void remove(int from, int to) {
         if (from > to) {
             throw new IllegalArgumentException("to must be greater then from");
-        } else if (from != to) {
+        }
+        if (from != to) {
             size += to - from;
             System.arraycopy(arr, to, arr, from, size);
         }
@@ -182,6 +152,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      *
      * @param index the index
      * @return the value at the index
+     * @throws IndexOutOfBoundsException if the requested index is out of range
      */
     public double get(int index) {
         if (index < 0 || index > size) {
@@ -204,8 +175,15 @@ public final class DoubleArrayList implements Iterable<Double> {
         size = 0;
     }
 
+    /**
+     * @return the values as an array
+     */
+    public double[] toArray() {
+        return Arrays.copyOf(arr, size);
+    }
+
     @Override
-    public Iterator<Double> iterator() {
+    public PrimitiveIterator.OfDouble iterator() {
         return new PrimitiveIterator.OfDouble() {
             private int i = 0;
 
@@ -221,7 +199,45 @@ public final class DoubleArrayList implements Iterable<Double> {
         };
     }
 
-    public double[] toArray() {
-        return Arrays.copyOf(arr, size);
+    @Override
+    public int hashCode() {
+        int result = 1;
+        for (int i = 0; i < size; ++i) {
+            long bits = Double.doubleToLongBits(arr[i]);
+            result = 31 * result + (int) (bits ^ (bits >>> 32));
+        }
+        return result;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof DoubleArrayList)) {
+            return false;
+        }
+        if (((DoubleArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((DoubleArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        if (size == 0) {
+            return "[]";
+        }
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < size; ++i) {
+            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
+        }
+        return stringBuilder.append(']').toString();
+    }
+
 }

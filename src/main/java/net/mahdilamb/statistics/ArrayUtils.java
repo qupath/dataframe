@@ -1,7 +1,7 @@
 package net.mahdilamb.statistics;
 
 
-import net.mahdilamb.dataframe.functions.BooleanBinaryOperator;
+import net.mahdilamb.dataframe.functions.BiBooleanPredicate;
 
 import java.util.Arrays;
 import java.util.function.*;
@@ -297,13 +297,13 @@ public final strictfp class ArrayUtils {
      *                 this)
      * @return the result of reducing the data with a function
      */
-    public static boolean reduce(boolean sentinel, BooleanBinaryOperator func, final boolean[] data) {
+    public static boolean reduce(boolean sentinel, BiBooleanPredicate func, final boolean[] data) {
         boolean out = data[0];
         if (data.length == 1) {
             return out;
         }
         for (int i = 1; i < data.length; ++i) {
-            out = func.applyAsBoolean(out, data[i]);
+            out = func.test(out, data[i]);
             if (out == sentinel) {
                 return sentinel;
             }
@@ -318,13 +318,13 @@ public final strictfp class ArrayUtils {
      * @param data the data to apply the function to
      * @return the result of reducing the data with a function
      */
-    public static boolean reduce(BooleanBinaryOperator func, final boolean[] data) {
+    public static boolean reduce(BiBooleanPredicate func, final boolean[] data) {
         boolean out = data[0];
         if (data.length == 1) {
             return out;
         }
         for (int i = 1; i < data.length; ++i) {
-            out = func.applyAsBoolean(out, data[i]);
+            out = func.test(out, data[i]);
         }
         return out;
     }

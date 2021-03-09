@@ -1,7 +1,6 @@
 package net.mahdilamb.dataframe.utils;
 
 import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * Array list backed by an array of primitive doubles
@@ -61,6 +60,11 @@ public final class BooleanArrayList implements Iterable<Boolean> {
         add(value, size);
     }
 
+    /**
+     * Add all the elements to the end of the array list
+     *
+     * @param values the values to add
+     */
     public void addAll(boolean... values) {
         if (size < arr.length + values.length) {
             ensureCapacity(arr.length + values.length);
@@ -69,50 +73,10 @@ public final class BooleanArrayList implements Iterable<Boolean> {
         size += values.length;
     }
 
-    void ensureCapacity(int newLength) {
+    private void ensureCapacity(int newLength) {
         if (size < newLength) {
             arr = Arrays.copyOf(arr, Math.max(newLength, arr.length >>> 1));
         }
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < size; ++i) {
-            result = 31 * result + (arr[i] ? 1231 : 1237);
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof BooleanArrayList)) {
-            return false;
-        }
-        if (((BooleanArrayList) obj).size != size()) {
-            return false;
-        }
-        for (int i = 0; i < size; ++i) {
-            if (arr[i] != ((BooleanArrayList) obj).arr[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        if (size == 0) {
-            return "[]";
-        }
-        final StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < size; ++i) {
-            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
-        }
-        return stringBuilder.append(']').toString();
     }
 
     /**
@@ -192,6 +156,13 @@ public final class BooleanArrayList implements Iterable<Boolean> {
         return arr[index];
     }
 
+    /**
+     * Set the element at the given index
+     *
+     * @param index the index to set at
+     * @param value the value to set
+     * @throws IndexOutOfBoundsException if the index is out of range
+     */
     public void set(int index, boolean value) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
@@ -199,6 +170,13 @@ public final class BooleanArrayList implements Iterable<Boolean> {
         arr[index] = value;
     }
 
+    /**
+     * Fill the array with n copies of the given value
+     *
+     * @param value the value
+     * @param n     the number of times to set the value. If n is greater than the size of the list, then the
+     *              list will increase in size
+     */
     public void fill(boolean value, int n) {
         ensureCapacity(n);
         Arrays.fill(arr, 0, n, value);
@@ -220,7 +198,7 @@ public final class BooleanArrayList implements Iterable<Boolean> {
     }
 
     @Override
-    public Iterator<Boolean> iterator() {
+    public PrimitiveIterators.OfBoolean iterator() {
         return new PrimitiveIterators.OfBoolean() {
             private int i = 0;
 
@@ -236,4 +214,43 @@ public final class BooleanArrayList implements Iterable<Boolean> {
         };
     }
 
+    @Override
+    public int hashCode() {
+        int result = 1;
+        for (int i = 0; i < size; ++i) {
+            result = 31 * result + (arr[i] ? 1231 : 1237);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof BooleanArrayList)) {
+            return false;
+        }
+        if (((BooleanArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((BooleanArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        if (size == 0) {
+            return "[]";
+        }
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < size; ++i) {
+            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
+        }
+        return stringBuilder.append(']').toString();
+    }
 }

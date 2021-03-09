@@ -7,15 +7,6 @@ import java.util.function.IntToDoubleFunction;
 import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
 
-/**
- * Java port of default sort algorithm in GO(lang). Combination of insertion/heap/quick sort
- * See <a href="https://golang.org/src/sort/sort.go">go source for more information</a>
- * The original implementation is copyright to the GO authors:
- * <p>
- * Copyright 2009 The Go Authors. All rights reserved.
- * Use of this source code is governed by a BSD-style
- * license that can be found in the <a href="https://golang.org/LICENSE">LICENSE</a> file (as below).
- */
 /*
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -44,6 +35,16 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * Java port of default sort algorithm in GO(lang). Combination of insertion/heap/quick sort
+ * See <a href="https://golang.org/src/sort/sort.go">go source for more information</a>
+ * The original implementation is copyright to the GO authors:
+ * <p>
+ * Copyright 2009 The Go Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the <a href="https://golang.org/LICENSE">LICENSE</a> file (as above).
  */
 public final class IntroSort {
     private IntroSort() {
@@ -82,6 +83,14 @@ public final class IntroSort {
         }
     }
 
+    /**
+     * Sort the integer arguments based using a functional approach
+     *
+     * @param args      the args to sort
+     * @param numArgs   the size of the source (e.g. the length of an array, size of a list)
+     * @param getter    the int to double function
+     * @param ascending whether to sort ascending
+     */
     public static void argSort(int[] args, int numArgs, IntToDoubleFunction getter, boolean ascending) {
         if (ascending) {
             quickSort(args, null, LessThan.fromDoubleGetter(getter), numArgs);
@@ -90,6 +99,14 @@ public final class IntroSort {
         }
     }
 
+    /**
+     * Sort the integer arguments based using a functional approach
+     *
+     * @param args      the args to sort
+     * @param numArgs   the size of the source (e.g. the length of an array, size of a list)
+     * @param getter    the int to long function
+     * @param ascending whether to sort ascending
+     */
     public static void argSort(int[] args, int numArgs, IntToLongFunction getter, boolean ascending) {
         if (ascending) {
             quickSort(args, null, LessThan.fromLongGetter(getter), numArgs);
@@ -98,6 +115,14 @@ public final class IntroSort {
         }
     }
 
+    /**
+     * Sort the integer arguments based using a functional approach
+     *
+     * @param args      the args to sort
+     * @param numArgs   the size of the source (e.g. the length of an array, size of a list)
+     * @param getter    the int to boolean function
+     * @param ascending whether to sort ascending
+     */
     public static void argSort(int[] args, int numArgs, IntPredicate getter, boolean ascending) {
         if (ascending) {
             quickSort(args, null, LessThan.fromBooleanGetter(getter), numArgs);
@@ -256,10 +281,9 @@ public final class IntroSort {
             return (d, l, r) -> Sorts.lt(func.test(r), func.test(l));
         }
 
-
     }
 
-    static <T> void insertionSort(int[] args, T data, LessThan<T> lessThan, int a, int b) {
+    private static <T> void insertionSort(int[] args, T data, LessThan<T> lessThan, int a, int b) {
         for (int i = a + 1; i < b; ++i) {
             for (int j = i; j > a && lessThan.test(data, args[j], args[j - 1]); --j) {
                 Sorts.swap(args, j, j - 1);
@@ -267,7 +291,7 @@ public final class IntroSort {
         }
     }
 
-    static void insertionSort(int[] args, double[] data, int a, int b) {
+    private static void insertionSort(int[] args, double[] data, int a, int b) {
         for (int i = a + 1; i < b; ++i) {
             for (int j = i; j > a && data[args[j]] < data[args[j - 1]]; --j) {
                 Sorts.swap(args, j, j - 1);
@@ -275,7 +299,7 @@ public final class IntroSort {
         }
     }
 
-    static void insertionSort(double[] data, int a, int b) {
+    private static void insertionSort(double[] data, int a, int b) {
         for (int i = a + 1; i < b; ++i) {
             for (int j = i; j > a && data[j] < data[j - 1]; --j) {
                 Sorts.swap(data, j, j - 1);
@@ -283,7 +307,7 @@ public final class IntroSort {
         }
     }
 
-    static <T> void siftDown(int[] args, T data, LessThan<T> comparator, int lo, int hi, int first) {
+    private static <T> void siftDown(int[] args, T data, LessThan<T> comparator, int lo, int hi, int first) {
         int root = lo;
         for (; ; ) {
             int child = 2 * root + 1;
@@ -301,7 +325,7 @@ public final class IntroSort {
         }
     }
 
-    static void siftDown(int[] args, double[] data, int lo, int hi, int first) {
+    private static void siftDown(int[] args, double[] data, int lo, int hi, int first) {
         int root = lo;
         for (; ; ) {
             int child = 2 * root + 1;
@@ -319,7 +343,7 @@ public final class IntroSort {
         }
     }
 
-    static void siftDown(double[] data, int lo, int hi, int first) {
+    private static void siftDown(double[] data, int lo, int hi, int first) {
         int root = lo;
         for (; ; ) {
             int child = 2 * root + 1;
@@ -337,7 +361,7 @@ public final class IntroSort {
         }
     }
 
-    static <T> void heapSort(int[] args, T data, LessThan<T> comparator, int a, int b) {
+    private static <T> void heapSort(int[] args, T data, LessThan<T> comparator, int a, int b) {
         int first = a,
                 lo = 0,
                 hi = b - a;
@@ -353,7 +377,7 @@ public final class IntroSort {
         }
     }
 
-    static void heapSort(int[] args, double[] data, int a, int b) {
+    private static void heapSort(int[] args, double[] data, int a, int b) {
         int first = a,
                 lo = 0,
                 hi = b - a;
@@ -369,7 +393,7 @@ public final class IntroSort {
         }
     }
 
-    static void heapSort(double[] data, int a, int b) {
+    private static void heapSort(double[] data, int a, int b) {
         int first = a,
                 lo = 0,
                 hi = b - a;
@@ -385,7 +409,7 @@ public final class IntroSort {
         }
     }
 
-    static void medianOfThree(double[] data, int m1, int m0, int m2) {
+    private static void medianOfThree(double[] data, int m1, int m0, int m2) {
         // sort 3 elements
         if (data[m1] < data[m0]) {
             Sorts.swap(data, m1, m0);
@@ -401,7 +425,7 @@ public final class IntroSort {
         // now data[m0] <= data[m1] <= data[m2]
     }
 
-    static <T> void medianOfThree(int[] args, T data, LessThan<T> lt, int m1, int m0, int m2) {
+    private static <T> void medianOfThree(int[] args, T data, LessThan<T> lt, int m1, int m0, int m2) {
         // sort 3 elements
         if (lt.test(data, args[m1], args[m0])) {
             Sorts.swap(args, m1, m0);
@@ -417,7 +441,7 @@ public final class IntroSort {
         // now data[m0] <= data[m1] <= data[m2]
     }
 
-    static void medianOfThree(int[] args, double[] data, int m1, int m0, int m2) {
+    private static void medianOfThree(int[] args, double[] data, int m1, int m0, int m2) {
         // sort 3 elements
         if (data[args[m1]] < data[args[m0]]) {
             Sorts.swap(args, m1, m0);
@@ -433,19 +457,19 @@ public final class IntroSort {
         // now data[m0] <= data[m1] <= data[m2]
     }
 
-    static void swapRange(double[] data, int a, int b, int n) {
+    private static void swapRange(double[] data, int a, int b, int n) {
         for (int i = 0; i < n; ++i) {
             Sorts.swap(data, a + i, b + i);
         }
     }
 
-    static void swapRange(int[] data, int a, int b, int n) {
+    private static void swapRange(int[] data, int a, int b, int n) {
         for (int i = 0; i < n; ++i) {
             Sorts.swap(data, a + i, b + i);
         }
     }
 
-    static void quickSort(double[] data, int a, int b, int maxDepth) {
+    private static void quickSort(double[] data, int a, int b, int maxDepth) {
         for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
                 heapSort(data, a, b);
@@ -564,7 +588,7 @@ public final class IntroSort {
         }
     }
 
-    static <T> void quickSort(int[] args, T data, LessThan<T> lt, int a, int b, int maxDepth) {
+    private static <T> void quickSort(int[] args, T data, LessThan<T> lt, int a, int b, int maxDepth) {
         for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
                 heapSort(args, data, lt, a, b);
@@ -683,7 +707,7 @@ public final class IntroSort {
         }
     }
 
-    static void quickSort(int[] args, double[] data, int a, int b, int maxDepth) {
+    private static void quickSort(int[] args, double[] data, int a, int b, int maxDepth) {
         for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
                 heapSort(args, data, a, b);
@@ -802,13 +826,13 @@ public final class IntroSort {
         }
     }
 
-    static void quickSort(double[] data, int a, int b) {
+    private static void quickSort(double[] data, int a, int b) {
         quickSort(data, a, b, maxDepth(data.length));
     }
 
     // maxDepth returns a threshold at which quicksort should switch
     // to heapsort. It returns 2*ceil(lg(n+1)).
-    static int maxDepth(int n) {
+    private static int maxDepth(int n) {
         int depth = 0;
         for (int i = n; i > 0; i >>= 1) {
             depth++;
@@ -816,39 +840,39 @@ public final class IntroSort {
         return depth * 2;
     }
 
-    static <T> void quickSort(int[] args, T data, LessThan<T> comparator, int size) {
+    private static <T> void quickSort(int[] args, T data, LessThan<T> comparator, int size) {
         quickSort(args, data, comparator, 0, size, maxDepth(size));
     }
 
-    static boolean lessThan(double[] data, int lhs, int rhs) {
+    private static boolean lessThan(double[] data, int lhs, int rhs) {
         return data[lhs] < data[rhs];
     }
 
-    static boolean greaterThan(double[] data, int lhs, int rhs) {
+    private static boolean greaterThan(double[] data, int lhs, int rhs) {
         return data[lhs] > data[rhs];
     }
 
-    static boolean lessThan(int[] data, int lhs, int rhs) {
+    private static boolean lessThan(int[] data, int lhs, int rhs) {
         return data[lhs] < data[rhs];
     }
 
-    static boolean greaterThan(int[] data, int lhs, int rhs) {
+    private static boolean greaterThan(int[] data, int lhs, int rhs) {
         return data[lhs] > data[rhs];
     }
 
-    static boolean lessThan(long[] data, int lhs, int rhs) {
+    private static boolean lessThan(long[] data, int lhs, int rhs) {
         return data[lhs] < data[rhs];
     }
 
-    static boolean greaterThan(long[] data, int lhs, int rhs) {
+    private static boolean greaterThan(long[] data, int lhs, int rhs) {
         return data[lhs] > data[rhs];
     }
 
-    static boolean lessThan(boolean[] data, int lhs, int rhs) {
+    private static boolean lessThan(boolean[] data, int lhs, int rhs) {
         return Sorts.lt(data[lhs], data[rhs]);
     }
 
-    static boolean greaterThan(boolean[] data, int lhs, int rhs) {
+    private static boolean greaterThan(boolean[] data, int lhs, int rhs) {
         return Sorts.gt(data[lhs], data[rhs]);
     }
 

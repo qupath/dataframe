@@ -173,6 +173,12 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
         return groupTable.get(key);
     }
 
+    /**
+     * Get a group by index
+     *
+     * @param index the index
+     * @return the group at the given index
+     */
     public Group<T> getGroup(int index) {
         for (final Map.Entry<T, Group<T>> g : groupTable.entrySet()) {
             if (g.getValue().getID() == index) {
@@ -311,10 +317,16 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
         return array;
     }
 
+    /**
+     * Get the values as a melted array
+     *
+     * @param array the output array (if the size is correct)
+     * @return an array of the melted values
+     */
     @SuppressWarnings("unchecked")
     public T[] toMeltedArray(T[] array) {
-        if (array == null || array.length < size()) {
-            array = (T[]) new Object[size()];
+        if (array.length < size()) {
+            array = (T[]) Array.newInstance(array.getClass().getComponentType(), size);
         }
         for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {
             for (final int j : e.getValue()) {
@@ -344,7 +356,7 @@ public class GroupBy<T> implements Iterable<GroupBy.Group<T>> {
      */
     @SuppressWarnings("unchecked")
     public T[] getGroups(T[] groups) {
-        if ( groups.length < size()) {
+        if (groups.length < size()) {
             groups = (T[]) Array.newInstance(groups.getClass().getComponentType(), numGroups());
         }
         for (final Map.Entry<T, Group<T>> e : groupTable.entrySet()) {

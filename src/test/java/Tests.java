@@ -12,7 +12,7 @@ public class Tests {
 
     @Test
     public void CSVTest() {
-        System.out.println(iris);
+        System.out.println(iris.query("species=='setosa' && petal_width > 1"));
     }
 
     @Test
@@ -20,6 +20,5 @@ public class Tests {
         System.out.println(DataFrame.clipboardImport('\t', '"', StandardCharsets.UTF_8));
 
     }
-
 
 }

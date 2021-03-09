@@ -80,7 +80,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * @param names the names of the columns of interest
      * @return a new data frame with the column names as specified
      */
-    DataFrame subset(String... names);
+    DataFrame subsetCols(String... names);
 
     /**
      * Get a value from a series
@@ -99,7 +99,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * Get an iterable over the names of the series
      */
     default Iterable<String> seriesNames() {
-        return () -> new Iterator<String>() {
+        return () -> new Iterator<>() {
             private int i = 0;
 
             @Override
@@ -192,7 +192,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * @return a dataframe
      * @implNote this will return a sliced view into the dataframe
      */
-    DataFrame subset(int start, int end);
+    DataFrame subsetCols(int start, int end);
 
     /**
      * Get a subset of the series based on a test of the series names
@@ -200,10 +200,33 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * @param test the test of the series names
      * @return a sliced view of this data frame
      */
-    DataFrame subset(Predicate<String> test);
+    DataFrame subsetCols(Predicate<String> test);
 
+    /**
+     * Filter the dataframe using a boolean series
+     *
+     * @param filter the boolean series
+     * @return a view of this dataframe, filtered as supplied
+     */
     DataFrame filter(BooleanSeries filter);
 
+    /**
+     * Get a subset of the rows
+     *
+     * @param start the first row (inclusive)
+     * @param end   the last row (exclusive)
+     * @return a view of the dataframe
+     */
+    DataFrame subset(int start, int end);
+
+    /**
+     * Filter the data frame based on the values in one of its series
+     *
+     * @param series the name of the series
+     * @param test   the test to apply
+     * @param <S>    the type of the value in the test
+     * @return a view of this dataframe
+     */
     <S extends Comparable<S>> DataFrame filter(String series, Predicate<S> test);
 
     /**
@@ -223,16 +246,41 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     DataFrame sortBy(final int index, boolean ascending);
 
+    /**
+     * Sort the data frame based on a column
+     *
+     * @param name      the name of the column
+     * @param ascending whether to sort ascending or descending
+     * @return a view of this dataframe
+     */
     DataFrame sortBy(final String name, boolean ascending);
 
+    /**
+     * Sort the data frame based on a column (ascending)
+     *
+     * @param index the index of the column
+     * @return a view of this dataframe
+     */
     default DataFrame sortBy(final int index) {
         return sortBy(index, true);
     }
 
+    /**
+     * Sort the data frame based on a column (ascending)
+     *
+     * @param name the name of the column
+     * @return a view of this dataframe
+     */
     default DataFrame sortBy(final String name) {
         return sortBy(name, true);
     }
 
+    /**
+     * Group the data frame by a column
+     *
+     * @param name the name of the column
+     * @return a view of this dataframe
+     */
     Iterable<DataFrame> groupBy(final String name);
 
     /**
@@ -245,14 +293,30 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
         return get(index).asDouble();
     }
 
+    /**
+     *  
+     * @param seriesName the name of the series
+     * @return a series as a double series
+     * @throws SeriesCastException if the series cannot be case to a double series
+     */
     default DoubleSeries getDoubleSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asDouble();
     }
-
+    /**
+     *
+     * @param seriesName the name of the series
+     * @return a series as a string series
+     * @throws SeriesCastException if the series cannot be case to a string series
+     */
     default StringSeries getStringSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asString();
     }
-
+    /**
+     *
+     * @param seriesName the name of the series
+     * @return a series as a long series
+     * @throws SeriesCastException if the series cannot be case to a long series
+     */
     default LongSeries getLongSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asLong();
     }
@@ -313,6 +377,12 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
         return size(Axis.COLUMN) * size(Axis.INDEX);
     }
 
+    /**
+     * View the data frame in the console
+     * @param maxCols the maximum columns to display
+     * @param maxRows the maximum rows to display
+     * @return a console-friendly view of this dataframe
+     */
     String toString(int maxCols, int maxRows);
 
     /**
@@ -320,7 +390,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     @Override
     default Iterator<Series<Comparable<Object>>> iterator() {
-        return new Iterator<Series<Comparable<Object>>>() {
+        return new Iterator<>() {
             private int i = 0;
 
             @Override
@@ -392,7 +462,6 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     static DataFrame from(final File source, char separator, char quoteCharacter, Charset charset) {
         return new DataFrameImporter.FromFile(source, separator, quoteCharacter, charset, false).build();
     }
-
 
     /**
      * Create a dataset from a file, skipping the import phase. Uses the defaults as described in

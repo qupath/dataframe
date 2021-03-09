@@ -1,5 +1,8 @@
 package net.mahdilamb.dataframe.utils;
 
+/**
+ * Utility class for working with comparables
+ */
 public final class Comparables {
     private Comparables() {
 

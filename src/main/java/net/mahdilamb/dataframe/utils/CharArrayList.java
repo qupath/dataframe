@@ -63,46 +63,6 @@ public final class CharArrayList implements Iterable<Character> {
         add(value, size);
     }
 
-    @Override
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < size; ++i) {
-            result = 31 * result + arr[i];
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof CharArrayList)) {
-            return false;
-        }
-        if (((CharArrayList) obj).size != size()) {
-            return false;
-        }
-        for (int i = 0; i < size; ++i) {
-            if (arr[i] != ((CharArrayList) obj).arr[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        if (size == 0) {
-            return "[]";
-        }
-        final StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < size; ++i) {
-            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
-        }
-        return stringBuilder.append(']').toString();
-    }
-
     /**
      * Remove elements between indices
      *
@@ -195,7 +155,7 @@ public final class CharArrayList implements Iterable<Character> {
     }
 
     @Override
-    public Iterator<Character> iterator() {
+    public PrimitiveIterators.OfCharacter iterator() {
         return new PrimitiveIterators.OfCharacter() {
             private int i = 0;
 
@@ -211,4 +171,43 @@ public final class CharArrayList implements Iterable<Character> {
         };
     }
 
+    @Override
+    public int hashCode() {
+        int result = 1;
+        for (int i = 0; i < size; ++i) {
+            result = 31 * result + arr[i];
+        }
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof CharArrayList)) {
+            return false;
+        }
+        if (((CharArrayList) obj).size != size()) {
+            return false;
+        }
+        for (int i = 0; i < size; ++i) {
+            if (arr[i] != ((CharArrayList) obj).arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        if (size == 0) {
+            return "[]";
+        }
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < size; ++i) {
+            (i == 0 ? stringBuilder.append('[') : stringBuilder.append(", ")).append(arr[i]);
+        }
+        return stringBuilder.append(']').toString();
+    }
 }

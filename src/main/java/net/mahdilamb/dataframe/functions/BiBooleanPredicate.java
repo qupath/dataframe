@@ -3,18 +3,19 @@ package net.mahdilamb.dataframe.functions;
 import java.util.Objects;
 
 /**
- * Functional interface for a predicate of two primitive doubles
+ * Functional interface that takes two primitive booleans and returns
+ * a boolean
  */
 @FunctionalInterface
-public interface BiDoublePredicate {
+public interface BiBooleanPredicate {
     /**
-     * Perform the operation on two doubles and return a boolean
+     * Apply a binary operator
      *
-     * @param a the left param
-     * @param b the right param
-     * @return the output boolean
+     * @param lhs left hand side operand
+     * @param rhs right hand side operand
+     * @return the result of the binary operation
      */
-    boolean test(double a, double b);
+    boolean test(boolean lhs, boolean rhs);
 
     /**
      * And operator to be used when compositing predicates
@@ -22,7 +23,7 @@ public interface BiDoublePredicate {
      * @param other the other predicated
      * @return a composite predicate
      */
-    default BiDoublePredicate and(BiDoublePredicate other) {
+    default BiBooleanPredicate and(BiBooleanPredicate other) {
         Objects.requireNonNull(other);
         return (a, b) -> test(a, b) && other.test(a, b);
     }
@@ -32,7 +33,7 @@ public interface BiDoublePredicate {
      *
      * @return a negated predicate
      */
-    default BiDoublePredicate negate() {
+    default BiBooleanPredicate negate() {
         return (a, b) -> !test(a, b);
     }
 
@@ -42,7 +43,7 @@ public interface BiDoublePredicate {
      * @param other the other predicated
      * @return a composite predicate
      */
-    default BiDoublePredicate or(BiDoublePredicate other) {
+    default BiBooleanPredicate or(BiBooleanPredicate other) {
         Objects.requireNonNull(other);
         return (a, b) -> test(a, b) || other.test(a, b);
     }
