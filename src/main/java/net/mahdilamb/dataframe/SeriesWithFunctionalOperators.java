@@ -13,7 +13,7 @@ import java.util.function.Supplier;
  * Functional operators to be used with data series.
  *
  * @param <T> the type of the elements in the series
- * @implNote These have been abstracted away as getting a series via dataset will
+ * @implNote These have been abstracted away as getting a series via dataframe will
  * not work for {@link DataFrame#get} as the compiler will not be able to get the type
  */
 interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<T> {
@@ -23,7 +23,7 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<
      * @param converter the test
      * @return a new boolean series produced from using the predicate on every element
      */
-    default BooleanSeries map(Predicate<T> converter) {
+    default BooleanSeries mapToBool(Predicate<T> converter) {
         return new SeriesImpl.OfBooleanArray(this, converter);
     }
 
@@ -37,7 +37,7 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<
      * @return a boolean series containing the results of the equality operation
      */
     default BooleanSeries eq(T other) {
-        return map(el -> Objects.equals(other, el));
+        return mapToBool(el -> Objects.equals(other, el));
     }
 
     /**

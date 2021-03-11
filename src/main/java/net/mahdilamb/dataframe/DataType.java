@@ -16,19 +16,19 @@ public enum DataType {
      * @apiNote Series that contain longs should also contain a {@code #isNaN(int index)} method to test whether it has
      * been zeroed during parse.
      */
-    LONG(10, StringUtils.LONG_PATTERN),
+    LONG(10, StringUtils.LONG_PATTERN, false),
     /**
      * A 64-bit float. If a value cannot be parsed, it will be {@code NaN}.
      */
-    DOUBLE(9, StringUtils.FLOATING_POINT_PATTERN_WITHOUT_HEX),
+    DOUBLE(9, StringUtils.FLOATING_POINT_PATTERN_WITHOUT_HEX, true),
     /**
      * Values are either true or false. If a value cannot be parsed, it will be false.
      */
-    BOOLEAN(8, StringUtils.BOOLEAN_PATTERN),
+    BOOLEAN(8, StringUtils.BOOLEAN_PATTERN, false),
     /**
      * String type
      */
-    STRING(0, Pattern.compile("(?:.*)"));
+    STRING(0, Pattern.compile("(?:.*)"), true);
 
     /**
      * Test if a data type is numeric
@@ -41,21 +41,17 @@ public enum DataType {
     }
 
     /**
-     * The score represents the preferred type in auto-selecting if all the values could be either of a type.
-     * <p>
-     * E.g. if all the values in a column could be Long or Double, then the weight decides which is chosen
-     */
-    protected final int score;
-    private final Pattern matcher;
-
-    /**
      * Test whether a string can be converted to this type
      *
      * @param string the string
      * @return whether this string can be cast as the given type
      */
     public boolean matches(String string) {
-        return string != null && matcher.matcher(string).matches();
+        return matcher.matcher(string).matches();
+    }
+
+    public boolean supportsNull() {
+        return supportsNull;
     }
 
     /**
@@ -77,12 +73,8 @@ public enum DataType {
      * @return a double of the string if parsable, or {@code NaN} if not
      */
     public static double toDouble(String value) {
-        if (StringUtils.FLOATING_POINT_PATTERN.matcher(value).matches()) {
-            try {
-                return java.lang.Double.parseDouble(value);
-            } catch (NumberFormatException ignored) {
-
-            }
+        if (value != null && value.length() > 0 && StringUtils.FLOATING_POINT_PATTERN.matcher(value).matches()) {
+            return java.lang.Double.parseDouble(value);
         }
         return java.lang.Double.NaN;
     }
@@ -214,9 +206,19 @@ public enum DataType {
         return Long.toString(value);
     }
 
-    DataType(int score, Pattern matcher) {
+    /**
+     * The score represents the preferred type in auto-selecting if all the values could be either of a type.
+     * <p>
+     * E.g. if all the values in a column could be Long or Double, then the weight decides which is chosen
+     */
+    protected final int score;
+    private final Pattern matcher;
+    private final boolean supportsNull;
+
+    DataType(int score, Pattern matcher, boolean supportsNull) {
         this.score = score;
         this.matcher = matcher;
+        this.supportsNull = supportsNull;
     }
 
     @Override

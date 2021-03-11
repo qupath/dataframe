@@ -1,13 +1,8 @@
 package net.mahdilamb.dataframe.utils;
 
 
-
 import net.mahdilamb.dataframe.functions.CharacterPredicate;
 
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -145,40 +140,42 @@ public final class StringUtils {
      * @param func      the function to apply to the cell
      * @return the ending position
      */
-    public static int iterateLine(String line, int offset, char sepChar, char quoteChar, Consumer<String> func) {
-        int s = offset, e = offset;
-        char quote = 0;
-        while (e < line.length()) {
-            final char c = line.charAt(e++);
-            if (c == quoteChar) {
-                quote = quote != c ? c : 0;
-            }
-            if (c == sepChar && quote == 0) {
-                break;
+    public static int iterateLine(String line, final int offset, char sepChar, char quoteChar, Consumer<String> func) {
+        int end = offset;
+        boolean trimQuotes = line.charAt(offset) == quoteChar;
+        if (line.charAt(offset) == '\\') {
+            if ((offset + 1) < line.length() && line.charAt(offset + 1) == quoteChar) {
+                trimQuotes = true;
             }
         }
-        int f;
-        if (e == line.length()) {
-            f = line.length() - 1;
-            if (line.charAt(s) == line.charAt(f) && line.charAt(f) == quoteChar) {
-                if (s != 0) {
-                    --f;
+        if (trimQuotes) {
+            ++end;
+            while (end < line.length()) {
+                final char c = line.charAt(end);
+                if (c == quoteChar) {
+                    break;
                 }
-                ++s;
-            } else {
-                f = line.length();
+                ++end;
             }
 
-        } else {
-            f = e - 2;
-            if (line.charAt(s) == line.charAt(f) && line.charAt(s) == quoteChar) {
-                ++s;
-            } else {
-                ++f;
-            }
         }
-        func.accept(line.substring(s, f));
-        return e;
+        while (end < line.length()) {
+            final char c = line.charAt(end);
+            if (c == sepChar) {
+                break;
+            }
+            ++end;
+        }
+        if (trimQuotes) {
+            func.accept(line.substring(offset + 1, end - 1));
+
+        } else {
+            func.accept(line.substring(offset, end));
+
+        }
+
+
+        return Math.min(end + 1, line.length());
     }
 
     /**
@@ -239,16 +236,6 @@ public final class StringUtils {
         return new String(out);
     }
 
-    /**
-     * Use AWT to get the string from the clipboard
-     *
-     * @return the string data from the clipboard
-     * @throws IOException                if the data cannot be retrieved
-     * @throws UnsupportedFlavorException if the clipboard does not contain a string
-     */
-    public static String getStringFromClipboard() throws IOException, UnsupportedFlavorException {
-        return (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
-    }
 
     static boolean isDigit(final char c) {
         return c >= '0' && c <= '9';

@@ -19,8 +19,10 @@ plugins {
 apply plugin: "com.bmuschko.nexus"
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_9
-//will work with Java 1.8, but this is required as there is a module-info.java
+    //will work with Java 1.8, but this is required as there is a module-info.java
     targetCompatibility = JavaVersion.VERSION_1_9
+    modularity.inferModulePath = true
+
 }
 group 'net.mahdilamb'
 version '0.1.2-SNAPSHOT'
@@ -34,7 +36,7 @@ repositories {
 
 dependencies {
     testCompile("junit:junit:4.13")
-    compile 'net.mahdilamb:utils-tuples:0.3.1'
+    compile 'net.mahdilamb:utils-tuples:0.4.1'
 
 }
 test {

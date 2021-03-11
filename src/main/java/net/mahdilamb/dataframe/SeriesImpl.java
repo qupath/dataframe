@@ -325,7 +325,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
     }
 
     private GroupBy<T> group;
-    private final String name;
+    String name;
     int start = 0;
     int end;
 
@@ -670,11 +670,11 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
     @Override
     public DataFrame valueCounts() {
-        final Map<T, Integer> map = new Hashtable<>();
+        final Map<T, Long> map = new Hashtable<>();
         for (int i = 0; i < size(); ++i) {
-            final Integer key = map.get(get(i));
+            final Long key = map.get(get(i));
             if (key == null) {
-                map.put(get(i), 1);
+                map.put(get(i), 1L);
                 continue;
             }
             map.put(get(i), key + 1);

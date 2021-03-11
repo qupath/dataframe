@@ -3,6 +3,7 @@ package net.mahdilamb.dataframe;
 
 import net.mahdilamb.dataframe.utils.GroupBy;
 import net.mahdilamb.dataframe.utils.IteratorUtils;
+import net.mahdilamb.dataframe.utils.StringParseException;
 import net.mahdilamb.dataframe.utils.StringUtils;
 
 import java.io.File;
@@ -19,7 +20,7 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
- * Default implementation of datasets
+ * Default implementation of dataframes
  */
 /*
     Possible future things to do:
@@ -124,8 +125,8 @@ abstract class DataFrameImpl implements DataFrame {
                             break;
                         case LONG:
                             final long[] long_values = new long[map.size()];
-                            for (final Map.Entry<Number, ?> entry : ((Map<Number, Object>) map).entrySet()) {
-                                long_values[i++] = entry.getKey().longValue();
+                            for (final Map.Entry<Long, ?> entry : ((Map<Long, Object>) map).entrySet()) {
+                                long_values[i++] = entry.getKey();
                             }
                             this.series[series] = new SeriesImpl.OfNonNaNLongArray(xName, long_values);
                             break;
@@ -315,7 +316,6 @@ abstract class DataFrameImpl implements DataFrame {
                         this.series[series] = dataFrame.get(series);
                     }
                 }
-                //todo bounds checking incorporating what is visible
                 return (Series<Comparable<Object>>) this.series[series];
             }
         }
@@ -464,9 +464,9 @@ abstract class DataFrameImpl implements DataFrame {
         private HashMap<String, Series<?>> seriesMap;
 
         /**
-         * Create a dataset from an array of series
+         * Create a dataframe from an array of series
          *
-         * @param name   the name of the dataset
+         * @param name   the name of the dataframe
          * @param series the array of series
          */
         @SuppressWarnings("unchecked")
@@ -513,22 +513,22 @@ abstract class DataFrameImpl implements DataFrame {
     }
 
     /**
-     * The name of the dataset
+     * The name of the dataframe
      */
     private final String name;
 
 
     /**
-     * Create an abstract named dataset
+     * Create an abstract named dataframe
      *
-     * @param name the name of the dataset
+     * @param name the name of the dataframe
      */
     protected DataFrameImpl(final String name) {
         this.name = name;
     }
 
     /**
-     * Implementation of a dataset created from a file
+     * Implementation of a dataframe created from a file
      */
     static final class FromFile extends DataFrameImpl {
         private final Series<?>[] series;
@@ -560,15 +560,19 @@ abstract class DataFrameImpl implements DataFrame {
                     default:
                         throw new UnsupportedOperationException();
                 }
-
             }
 
             try (FileInputStream inputStream = new FileInputStream(name); Scanner scanner = new Scanner(inputStream, charset.name())) {
-                if (hasColumnNames) {
-                    final String colNames = scanner.nextLine();
-                    if (getColumnNames) {
-                        //TODO get column names
+                final String colNames = scanner.nextLine();
 
+                if (hasColumnNames) {
+                    if (getColumnNames) {
+                        int h = 0, o = 0;
+                        while (h < colNames.length()) {
+                            int currentO = o;
+                            h = StringUtils.iterateLine(colNames, h, separator, quoteCharacter, str -> ((SeriesImpl<?>) series[currentO]).name = str);
+                            ++o;
+                        }
                     }
                 }
                 int rowCount = 0;
@@ -583,7 +587,7 @@ abstract class DataFrameImpl implements DataFrame {
                                 case LONG:
                                     final SeriesImpl.OfLongArray s = (SeriesImpl.OfLongArray) series[currentO];
                                     if (DataType.LONG.matches(str)) {
-                                        s.data[row] = Long.parseLong(str);
+                                        s.data[row] = DataType.toLong(str);
                                     }
                                     break;
                                 case DOUBLE:
@@ -597,7 +601,6 @@ abstract class DataFrameImpl implements DataFrame {
                                     break;
                                 default:
                                     throw new UnsupportedOperationException();
-
                             }
                         });
                         ++o;
@@ -729,8 +732,8 @@ abstract class DataFrameImpl implements DataFrame {
         return stringBuilder.append('}').toString();
     }
 
-    static StringBuilder alignRight(StringBuilder stringBuilder, final String td, int width, UnaryOperator<StringBuilder> trimmer) {
-
+    static StringBuilder alignRight(StringBuilder stringBuilder, String td, int width, UnaryOperator<StringBuilder> trimmer) {
+        td = td == null?"": td;
         if (td.length() < width) {
             return stringBuilder.append(StringUtils.repeatCharacter(' ', width - td.length())).append(td);
         } else {
@@ -810,8 +813,8 @@ abstract class DataFrameImpl implements DataFrame {
         return c == '<' || c == '>' || c == '=' || c == '!';
     }
 
+
     @Override
-    //todo  | and & and consider type precedence e.g. long v double should compare as double
     public DataFrame query(String query) {
         int nameStart = 0;
         int nameEnd = -1;
@@ -840,7 +843,6 @@ abstract class DataFrameImpl implements DataFrame {
                     }
                     i = nameEnd;
                 } else {
-                    //todo consider escape characters
                     if (nameEnd != -1) {
                         valStart = i;
                         valEnd = valStart;
@@ -852,7 +854,6 @@ abstract class DataFrameImpl implements DataFrame {
                         }
                         i = query.length();
                     } else {
-                        //TODO check for correct quotes
                         nameStart = i;
                         nameEnd = nameStart;
                         while (query.charAt(nameEnd) != ' ' && !isComparator(query.charAt(nameEnd))) {
@@ -867,15 +868,21 @@ abstract class DataFrameImpl implements DataFrame {
 
             if (i >= query.length()) {
                 final Series<?> series = get(query.substring(nameStart, nameEnd));
+                if (series == null) {
+                    throw new StringParseException(query, nameStart);
+                }
                 switch (series.getType()) {
                     case STRING:
-                        return filter(series.getName(), (Predicate<String>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart + 1, valEnd - 1, it -> it));
+                        return filter(series.getName(), (Predicate<String>) query0(query, opStart, opEnd, valStart + 1, valEnd - 1, it -> it));
                     case BOOLEAN:
-                        return filter(series.getName(), (Predicate<Boolean>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toBoolean));
+                        return filter(series.getName(), (Predicate<Boolean>) query0(query, opStart, opEnd, valStart, valEnd, DataType::toBoolean));
                     case LONG:
-                        return filter(series.getName(), (Predicate<Long>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toLong));
+                        if (!DataType.LONG.matches(query, valStart, valEnd)) {
+                            return filter(series.asDouble().mapToBool(query0(query, opStart, opEnd, valStart, valEnd, DataType::toDouble)));
+                        }
+                        return filter(series.getName(), (Predicate<Long>) query0(query, opStart, opEnd, valStart, valEnd, DataType::toLong));
                     case DOUBLE:
-                        return filter(series.getName(), (Predicate<Double>) query0(this, query, nameStart, nameEnd, opStart, opEnd, valStart, valEnd, DataType::toDouble));
+                        return filter(series.getName(), (Predicate<Double>) query0(query, opStart, opEnd, valStart, valEnd, DataType::toDouble));
                     default:
                         throw new UnsupportedOperationException();
                 }
@@ -884,14 +891,13 @@ abstract class DataFrameImpl implements DataFrame {
     }
 
     @SuppressWarnings("unchecked")
-    static <U extends Comparable<U>> Predicate<U> query0(final DataFrame source, String query, int nameStart, int nameEnd, int opStart, int opEnd, int valStart, int valEnd, Function<String, U> converter) {
+    static <U extends Comparable<U>> Predicate<U> query0(String query, int opStart, int opEnd, int valStart, int valEnd, Function<String, ? extends U> valueConverter) {
         final String value = query.substring(valStart, valEnd);
-        final Series<?> series = source.get(query.substring(nameStart, nameEnd));
         int len = opEnd - opStart;
         if (len == 2 && query.charAt(opEnd - 1) != '=') {
             throw new IllegalArgumentException();
         }
-        final U val = converter.apply(value);
+        final U val = valueConverter.apply(value);
         switch (query.charAt(opStart)) {
             case '<':
             case '>':
@@ -934,13 +940,13 @@ abstract class DataFrameImpl implements DataFrame {
         }
         switch (s.getType()) {
             case LONG:
-                return filter(s.asLong().map((Predicate<Long>) test));
+                return filter(s.asLong().mapToBool((Predicate<Long>) test));
             case BOOLEAN:
-                return filter(s.asBoolean().map((Predicate<Boolean>) test));
+                return filter(s.asBoolean().mapToBool((Predicate<Boolean>) test));
             case STRING:
-                return filter(s.asString().map((Predicate<String>) test));
+                return filter(s.asString().mapToBool((Predicate<String>) test));
             case DOUBLE:
-                return filter(s.asDouble().map((Predicate<Double>) test));
+                return filter(s.asDouble().mapToBool((Predicate<Double>) test));
             default:
                 throw new UnsupportedOperationException();
         }

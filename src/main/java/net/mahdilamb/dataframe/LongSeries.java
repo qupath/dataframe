@@ -45,6 +45,12 @@ public interface LongSeries extends NumericSeries<Long> {
         };
     }
 
+    /**
+     * Convert this series to an array of primitive longs
+     *
+     * @param output the output array
+     * @return the output array (if correctly sized) or a new array if not
+     */
     default long[] toArray(long[] output) {
         if (output.length != size()) {
             output = new long[size()];

@@ -41,6 +41,12 @@ public interface BooleanSeries extends Series<Boolean>, SeriesWithFunctionalOper
         };
     }
 
+    /**
+     * Convert this series to an array of primitive booleans
+     *
+     * @param output the output array
+     * @return the output array (if correctly sized) or a new array if not
+     */
     default boolean[] toArray(boolean[] output) {
         if (output.length != size()) {
             output = new boolean[size()];

@@ -2,9 +2,7 @@ package net.mahdilamb.dataframe;
 
 import net.mahdilamb.dataframe.utils.StringUtils;
 
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -28,7 +26,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     /**
-     * @return the name of the dataset
+     * @return the name of the dataframe
      */
     String getName();
 
@@ -49,7 +47,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     * @return the number of series in this dataset
+     * @return the number of series in this dataframe
      */
     int numSeries();
 
@@ -118,7 +116,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * Get an iterable over the datatypes of the series
      */
     default Iterable<DataType> dataTypes() {
-        return () -> new Iterator<DataType>() {
+        return () -> new Iterator<>() {
             private int i = 0;
 
             @Override
@@ -152,7 +150,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     * @return an iterable over the indices of the items in the dataset
+     * @return an iterable over the indices of the items in the dataframe
      */
     default Iterable<Integer> indices() {
         return () -> new PrimitiveIterator.OfInt() {
@@ -220,6 +218,44 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     DataFrame subset(int start, int end);
 
     /**
+     * Return the top n rows
+     *
+     * @param n the number of rows
+     * @return a view of the dataframe
+     */
+    default DataFrame head(int n) {
+        return subset(0, n);
+    }
+
+    /**
+     * Return the top 5 rows
+     *
+     * @return a view of the dataframe
+     */
+    default DataFrame head() {
+        return subset(0, 5);
+    }
+
+    /**
+     * Return the bottom n rows
+     *
+     * @param n the number of rows
+     * @return a view of the dataframe
+     */
+    default DataFrame tail(int n) {
+        return subset(size(Axis.INDEX) - n, size(Axis.INDEX));
+    }
+
+    /**
+     * Return the bottom 5 rows
+     *
+     * @return a view of the dataframe
+     */
+    default DataFrame tail() {
+        return subset(size(Axis.INDEX) - 5, size(Axis.INDEX));
+    }
+
+    /**
      * Filter the data frame based on the values in one of its series
      *
      * @param series the name of the series
@@ -230,7 +266,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     <S extends Comparable<S>> DataFrame filter(String series, Predicate<S> test);
 
     /**
-     * Perform a simple query on the dataframe. Currently only supports single equality operators
+     * Perform a single query against a column e.g {@code column_name == 'find'}.
      *
      * @param query the query
      * @return a dataframe that is the subset as specified by the query
@@ -294,7 +330,6 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     *  
      * @param seriesName the name of the series
      * @return a series as a double series
      * @throws SeriesCastException if the series cannot be case to a double series
@@ -302,8 +337,8 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     default DoubleSeries getDoubleSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asDouble();
     }
+
     /**
-     *
      * @param seriesName the name of the series
      * @return a series as a string series
      * @throws SeriesCastException if the series cannot be case to a string series
@@ -311,8 +346,8 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     default StringSeries getStringSeries(final String seriesName) throws SeriesCastException {
         return get(seriesName).asString();
     }
+
     /**
-     *
      * @param seriesName the name of the series
      * @return a series as a long series
      * @throws SeriesCastException if the series cannot be case to a long series
@@ -379,6 +414,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
 
     /**
      * View the data frame in the console
+     *
      * @param maxCols the maximum columns to display
      * @param maxRows the maximum rows to display
      * @return a console-friendly view of this dataframe
@@ -406,11 +442,11 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     * Factory method to create a dataset from an array of numeric series
+     * Factory method to create a dataframe from an array of numeric series
      *
-     * @param name   the name of the dataset
+     * @param name   the name of the dataframe
      * @param series the array of series
-     * @return a dataset wrapping the series
+     * @return a dataframe wrapping the series
      */
     @SafeVarargs
     static <S extends Comparable<S>, T extends Series<? extends S>> DataFrame from(final String name, T... series) {
@@ -424,7 +460,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * @param separator      the separator (e.g. comma or tab)
      * @param quoteCharacter the quote character
      * @param charset        the character set used to read the file
-     * @return a dataset importer.
+     * @return a dataframe importer.
      * @see DataFrameImporter
      */
     static DataFrameImporter importer(final File source, char separator, char quoteCharacter, Charset charset) {
@@ -436,7 +472,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * {@link #DEFAULT_CHARSET} and {@link #DEFAULT_QUOTE_CHARACTER} to read the text file
      *
      * @param file the file
-     * @return a dataset importer
+     * @return a dataframe importer
      */
     static DataFrameImporter importer(final File file) {
         final String ext = StringUtils.getLastCharactersToLowerCase(new char[4], file.getName());
@@ -451,24 +487,24 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     * Create a dataset from a file, skipping the import checking phase
+     * Create a dataframe from a file, skipping the import checking phase
      *
      * @param source         the file to import
      * @param separator      the character separator
      * @param quoteCharacter the quote character used in the file
      * @param charset        the character set used by the file
-     * @return a dataset from the file
+     * @return a dataframe from the file
      */
     static DataFrame from(final File source, char separator, char quoteCharacter, Charset charset) {
         return new DataFrameImporter.FromFile(source, separator, quoteCharacter, charset, false).build();
     }
 
     /**
-     * Create a dataset from a file, skipping the import phase. Uses the defaults as described in
+     * Create a dataframe from a file, skipping the import phase. Uses the defaults as described in
      * {@link #importer(File, char, char, Charset)}
      *
      * @param file the file to import
-     * @return a dataset from the file
+     * @return a dataframe from the file
      */
     static DataFrame from(File file) {
         final String ext = StringUtils.getLastCharactersToLowerCase(new char[4], file.getName());
@@ -481,11 +517,5 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
                 throw new UnsupportedOperationException("Reading " + file + " is not currently supported");
         }
     }
-
-    //TODO
-    static DataFrameImporter clipboardImport(char separator, char quoteCharacter, Charset charset) throws IOException, UnsupportedFlavorException {
-        return new DataFrameImporter.FromString(StringUtils.getStringFromClipboard(), separator, quoteCharacter, charset, true);
-    }
-
 
 }
