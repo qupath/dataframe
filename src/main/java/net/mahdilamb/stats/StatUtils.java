@@ -1,9 +1,12 @@
 package net.mahdilamb.stats;
 
+import net.mahdilamb.stats.utils.FloydRivestSelection;
+
 import java.util.Arrays;
 import java.util.function.IntToDoubleFunction;
 
 import static java.lang.Math.abs;
+import static net.mahdilamb.stats.ArrayUtils.intRange;
 
 /**
  * Utility class for calculating statistics. All statistics should be calculated without objects (where possible).
@@ -151,6 +154,21 @@ public strictfp final class StatUtils {
         return sumMeanDiffSq;
     }
 
+    public static double variance(IntToDoubleFunction getter, int size, int ddof) {
+        final double mean = mean(getter, size);
+        double sumMeanDiffSq = 0d;
+        int n = size - ddof;
+        for (int i = 0; i < size; ++i) {
+            final double meanDiff = getter.applyAsDouble(i) - mean;
+            sumMeanDiffSq += (meanDiff * meanDiff) / n;
+        }
+        return sumMeanDiffSq;
+    }
+
+    public static double standardDeviation(IntToDoubleFunction getter, int size, int ddof) {
+        return Math.sqrt(variance(getter, size, ddof));
+    }
+
     /**
      * Calculate the standard deviation using a functional accessor
      *
@@ -266,6 +284,20 @@ public strictfp final class StatUtils {
         return accum / count;
     }
 
+    public static double NaNMean(IntToDoubleFunction data, int size) {
+        double accum = 0;
+        long count = 0;
+        for (int i = 0; i < size; ++i) {
+            final double d = data.applyAsDouble(i);
+            if (Double.isNaN(d)) {
+                continue;
+            }
+            ++count;
+            accum += d;
+        }
+        return accum / count;
+    }
+
     /**
      * Get the count of non-nan values
      *
@@ -275,6 +307,18 @@ public strictfp final class StatUtils {
     public static double NaNCount(final double... data) {
         long count = 0;
         for (final double d : data) {
+            if (Double.isNaN(d)) {
+                continue;
+            }
+            ++count;
+        }
+        return count;
+    }
+
+    public static double NaNCount(final IntToDoubleFunction data, int size) {
+        long count = 0;
+        for (int i = 0; i < size; ++i) {
+            final double d = data.applyAsDouble(i);
             if (Double.isNaN(d)) {
                 continue;
             }
@@ -353,6 +397,25 @@ public strictfp final class StatUtils {
         return sumMeanDiffSq / (n);
     }
 
+    public static double NaNVariance(final double mean, final IntToDoubleFunction data, int size) {
+        if (size <= 1) {
+            return Double.NaN;
+        }
+        int n = -1;
+
+        double sumMeanDiffSq = 0d;
+        for (int i = 0; i < size; ++i) {
+            final double d = data.applyAsDouble(i);
+            if (Double.isNaN(d)) {
+                continue;
+            }
+            final double meanDiff = d - mean;
+            sumMeanDiffSq += (meanDiff * meanDiff);
+            n++;
+        }
+        return sumMeanDiffSq / (n);
+    }
+
     /**
      * Calculate the variance of the data (ignores Nan)
      *
@@ -363,6 +426,10 @@ public strictfp final class StatUtils {
         return NaNVariance(NaNMean(data), data);
     }
 
+    public static double NaNVariance(IntToDoubleFunction data, int size) {
+        return NaNVariance(NaNMean(data, size), data, size);
+    }
+
     /**
      * Calculate the standard deviation of the data (ignores Nan)
      *
@@ -371,6 +438,10 @@ public strictfp final class StatUtils {
      */
     public static double NaNStandardDeviation(final double... data) {
         return Math.sqrt(NaNVariance(data));
+    }
+
+    public static double NaNStandardDeviation(IntToDoubleFunction data, int size) {
+        return Math.sqrt(NaNVariance(data, size));
     }
 
     /**
@@ -464,6 +535,35 @@ public strictfp final class StatUtils {
      */
     public static double NaNQuantile(final double quantile, final double... data) {
         return NaNQuantile(quantile, Interpolation.LINEAR, data);
+    }
+
+    /**
+     * Get the appropriate quantile in a functional style where the order has already been determined
+     *
+     * @param getter   the index-to-value getter
+     * @param size     the size of the source
+     * @param order    the sort order
+     * @param quantile the quantile of interest (0-1)
+     * @return the requested quantile of already sorted data
+     */
+    public static double quantile(IntToDoubleFunction getter, int size, int[] order, double quantile) {
+        double pos = quantile * (size - 1);
+        int p = (int) pos;
+        if (pos != p) {
+            return Interpolation.LINEAR.interpolate(pos - p, FloydRivestSelection.select(order, getter, 0, size - 1, p), FloydRivestSelection.select(order, getter, 0, size - 1, p + 1));
+        } else {
+            return FloydRivestSelection.select(order, getter, 0, size - 1, p);
+        }
+    }
+
+    public static double quantile(IntToDoubleFunction getter, int size, double quantile) {
+        return quantile(getter, size, intRange(size), quantile);
+    }
+
+    public static double interQuartileRange(IntToDoubleFunction getter, int size, int[] order) {
+        double q1 = quantile(getter, size, order, .25);
+        double q3 = quantile(getter, size, order, .75);
+        return q3 - q1;
     }
 
     /**
@@ -1212,6 +1312,15 @@ public strictfp final class StatUtils {
             binCount(out.getCount(), indices);
         }
         return out;
+    }
+
+    private static void full(IntToDoubleFunction src, int srcPos,
+                             double[] dest, int destPos,
+                             int length) {
+        for (int i = 0; i < length; ++i) {
+            dest[destPos + i] = src.applyAsDouble(srcPos + i);
+        }
+
     }
 
     /**

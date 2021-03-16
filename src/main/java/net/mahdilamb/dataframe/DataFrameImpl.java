@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
@@ -516,6 +513,8 @@ abstract class DataFrameImpl implements DataFrame {
      * The name of the dataframe
      */
     private final String name;
+    List<String> names;
+    List<DataType> types;
 
 
     /**
@@ -733,7 +732,7 @@ abstract class DataFrameImpl implements DataFrame {
     }
 
     static StringBuilder alignRight(StringBuilder stringBuilder, String td, int width, UnaryOperator<StringBuilder> trimmer) {
-        td = td == null?"": td;
+        td = td == null ? "" : td;
         if (td.length() < width) {
             return stringBuilder.append(StringUtils.repeatCharacter(' ', width - td.length())).append(td);
         } else {
@@ -812,7 +811,6 @@ abstract class DataFrameImpl implements DataFrame {
     static boolean isComparator(final char c) {
         return c == '<' || c == '>' || c == '=' || c == '!';
     }
-
 
     @Override
     public DataFrame query(String query) {
@@ -1033,4 +1031,21 @@ abstract class DataFrameImpl implements DataFrame {
         return this;
     }
 
+    @Override
+    public List<String> listSeriesNames() {
+        if (names == null) {
+            names = new ArrayList<>(numSeries());
+            seriesNames().forEach(names::add);
+        }
+        return names;
+    }
+
+    @Override
+    public List<DataType> listDataTypes() {
+        if (types == null) {
+            types = new ArrayList<>(numSeries());
+            dataTypes().forEach(types::add);
+        }
+        return types;
+    }
 }

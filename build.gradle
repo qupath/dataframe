@@ -8,6 +8,7 @@ buildscript {
         classpath("com.bmuschko:gradle-nexus-plugin:2.3.1")
 
     }
+
 }
 
 plugins {
@@ -17,15 +18,19 @@ plugins {
     id("org.spongepowered.plugin") version "0.6"
 }
 apply plugin: "com.bmuschko.nexus"
+java {
+    modularity.inferModulePath = true
+}
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_9
     //will work with Java 1.8, but this is required as there is a module-info.java
     targetCompatibility = JavaVersion.VERSION_1_9
-    modularity.inferModulePath = true
 
 }
+
 group 'net.mahdilamb'
 version '0.2.0'
+ext.moduleName = 'net.mahdilamb.dataframe'
 
 repositories {
     mavenCentral()
@@ -36,7 +41,7 @@ repositories {
 
 dependencies {
     testCompile("junit:junit:4.13")
-    compile 'net.mahdilamb:utils-tuples:0.4.1'
+    compile 'net.mahdilamb:utils-tuples:0.4.21'
 
 }
 test {
@@ -46,6 +51,7 @@ test {
 javadoc {
     options.tags = ["apiNote", "implNote","implSpec"]
 }
+
 modifyPom {
 
     project {
@@ -73,10 +79,7 @@ modifyPom {
             connection = "scm:https://mahdilamb@github.com/mahdilamb/dataframe.git"
             developerConnection = "scm:git://github.com/mahdilamb/dataframe.git"
         }
-
-
     }
-
 }
 
 extraArchive {

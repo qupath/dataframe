@@ -3,6 +3,7 @@ package net.mahdilamb.stats.utils;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.IntToDoubleFunction;
 
 import static net.mahdilamb.stats.utils.Sorts.swap;
 
@@ -103,6 +104,111 @@ public final class FloydRivestSelection {
                 right = j - 1;
             }
         }
+    }
+
+    /**
+     * Select the kth element in an array
+     *
+     * @param args  an array of distinct indices that includes the partial sort of the array
+     * @param array the value of the arrays
+     * @param left  the start index
+     * @param right the end index
+     * @param k     the k element
+     */
+    public static double select(int[] args, double[] array, int left, int right, int k) {
+        while (right > left) {
+            if (right - left > 600) {
+                int n = right - left + 1;
+                int i = k - left + 1;
+                double z = Math.log(n);
+                double s = 0.5 * Math.exp(2 * z / 3);
+                double sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * Math.signum(i - n >> 1);
+                int newLeft = (int) Math.max(left, k - i * s / n + sd);
+                int newRight = (int) Math.min(right, k + (n - i) * s / n + sd);
+                return select(args, array, newLeft, newRight, k);
+            }
+            double t = array[args[k]];
+            int i = left;
+            int j = right;
+            swap(args, left, k);
+            if (array[args[right]] > t) {
+                swap(args, right, left);
+            }
+            while (i < j) {
+                swap(args, i, j);
+                ++i;
+                --j;
+                while (array[args[i]] < t) i++;
+                while (array[args[j]] > t) j--;
+            }
+
+            if (array[args[left]] == t) {
+                swap(args, left, j);
+            } else {
+                swap(args, ++j, right);
+            }
+            // Adjust left and right towards the boundaries of the subset
+            // containing the (k − left + 1)th smallest element.
+            if (j <= k) {
+                left = j + 1;
+            }
+            if (k <= j) {
+                right = j - 1;
+            }
+        }
+        return array[args[k]];
+    }
+    /**
+     * Select the kth element in an array using a functional style
+     *
+     * @param args  an array of distinct indices that includes the partial sort of the array
+     * @param array the index-to-value getter
+     * @param left  the start index
+     * @param right the end index
+     * @param k     the k element
+     */
+    public static double select(int[] args, IntToDoubleFunction array, int left, int right, int k) {
+        while (right > left) {
+            if (right - left > 600) {
+                int n = right - left + 1;
+                int i = k - left + 1;
+                double z = Math.log(n);
+                double s = 0.5 * Math.exp(2 * z / 3);
+                double sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * Math.signum(i - n >> 1);
+                int newLeft = (int) Math.max(left, k - i * s / n + sd);
+                int newRight = (int) Math.min(right, k + (n - i) * s / n + sd);
+                return select(args, array, newLeft, newRight, k);
+            }
+            double t = array.applyAsDouble(args[k]);
+            int i = left;
+            int j = right;
+            swap(args, left, k);
+            if (array.applyAsDouble(args[right]) > t) {
+                swap(args, right, left);
+            }
+            while (i < j) {
+                swap(args, i, j);
+                ++i;
+                --j;
+                while (array.applyAsDouble(args[i]) < t) i++;
+                while (array.applyAsDouble(args[j]) > t) j--;
+            }
+
+            if (array.applyAsDouble(args[left]) == t) {
+                swap(args, left, j);
+            } else {
+                swap(args, ++j, right);
+            }
+            // Adjust left and right towards the boundaries of the subset
+            // containing the (k − left + 1)th smallest element.
+            if (j <= k) {
+                left = j + 1;
+            }
+            if (k <= j) {
+                right = j - 1;
+            }
+        }
+        return array.applyAsDouble(args[k]);
     }
 
     /**

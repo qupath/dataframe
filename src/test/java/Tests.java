@@ -3,7 +3,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 public class Tests {
     static DataFrame loadFromResources(final String name) {
