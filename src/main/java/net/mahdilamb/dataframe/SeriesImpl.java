@@ -56,7 +56,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, data, ascending);
         }
     }
 
@@ -90,7 +90,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, data, ascending);
         }
     }
 
@@ -122,7 +122,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, data, ascending);
 
         }
     }
@@ -147,7 +147,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, this::getDouble, ascending);
+            IntroSort.argSort(args, this::getDouble, ascending);
         }
     }
 
@@ -176,7 +176,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, this::getLong, ascending);
+            IntroSort.argSort(args, this::getLong, ascending);
 
         }
     }
@@ -224,7 +224,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, data, ascending);
 
         }
     }
@@ -270,7 +270,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, data, ascending);
+            IntroSort.argSort(args, data, ascending);
 
         }
     }
@@ -294,7 +294,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, this::getDouble, ascending);
+            IntroSort.argSort(args, this::getDouble, ascending);
 
         }
     }
@@ -319,7 +319,7 @@ abstract class SeriesImpl<T extends Comparable<T>> implements Series<T>, SeriesW
 
         @Override
         void sortArgs(int[] args, int size, boolean ascending) {
-            IntroSort.argSort(args, size, this::getBoolean, ascending);
+            IntroSort.argSort(args, this::getBoolean, ascending);
 
         }
     }

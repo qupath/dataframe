@@ -14,8 +14,6 @@ public final class Cephes {
     private Cephes() {
     }
 
-
-    public static final double M_PI = 3.14159265358979323846264338327950288;
     public static final double NPY_PI = 3.141592653589793238462643383279502884;
     public static final double NPY_PI_2 = 1.570796326794896619231321691639751442;
     public static final double NPY_PI_4 = 0.785398163397448309615660845819875721;
@@ -93,10 +91,22 @@ public final class Cephes {
         return CephesImpl.incbi_c.incbi(aa, bb, yy0);
     }
 
+    /**
+     * @param a a
+     * @param x x
+     * @return the complemented incomplete Gamma integral
+     * @throws DomainException if either of the arguments are below 0
+     */
     public static double igam(double a, double x) throws DomainException {
         return CephesImpl.igam_c.igam(a, x);
     }
 
+    /**
+     * @param a a
+     * @param x x
+     * @return the incomplete Gamma integral
+     * @throws DomainException if either of the arguments are below 0
+     */
     public static double igamc(double a, double x) throws DomainException {
         return CephesImpl.igam_c.igamc(a, x);
     }
@@ -218,6 +228,10 @@ public final class Cephes {
 
     public static double beta(double a, double b) throws OverflowException {
         return CephesImpl.beta_c.beta(a, b);
+    }
+
+    public static double betaln(double a, double b) throws OverflowException {
+        return Math.log(Math.abs(beta(a, b)));
     }
 
     public static double lbeta(double a, double b) throws OverflowException {

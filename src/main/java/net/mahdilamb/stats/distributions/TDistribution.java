@@ -3,7 +3,7 @@ package net.mahdilamb.stats.distributions;
 /**
  * A continuous Student's t-distribution
  */
-public final class TDistribution implements Distribution {
+public final class TDistribution implements ContinuousDistribution {
     /**
      * The degrees of freedom of this t-distribution
      */

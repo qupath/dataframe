@@ -5,7 +5,7 @@ import static net.mahdilamb.stats.distributions.NormalDistributions.standardize;
 /**
  * An Anglit distribution
  */
-public final class AnglitDistribution implements Distribution {
+public final class AnglitDistribution implements ContinuousDistribution {
     /**
      * The mean and standard deviation of this distribution
      */

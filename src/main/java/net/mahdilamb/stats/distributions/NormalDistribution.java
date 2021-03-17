@@ -7,7 +7,7 @@ import static net.mahdilamb.stats.distributions.NormalDistributions.*;
 /**
  * Normal distribution
  */
-public final class NormalDistribution implements Distribution {
+public final class NormalDistribution implements ContinuousDistribution {
     /**
      * Summary statistics of a normal distribution
      */

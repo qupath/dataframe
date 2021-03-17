@@ -1,6 +1,13 @@
 package net.mahdilamb.stats;
 
+import net.mahdilamb.dataframe.utils.DualPivotQuickSort;
+import net.mahdilamb.dataframe.utils.MergeSort;
+import net.mahdilamb.stats.distributions.NormalDistributions;
+import net.mahdilamb.stats.distributions.TDistributions;
+import net.mahdilamb.stats.libs.Cephes;
 import net.mahdilamb.stats.utils.FloydRivestSelection;
+import net.mahdilamb.utils.tuples.NamedDoubleTuple;
+import net.mahdilamb.utils.tuples.Tuple;
 
 import java.util.Arrays;
 import java.util.function.IntToDoubleFunction;
@@ -57,6 +64,8 @@ public strictfp final class StatUtils {
     private StatUtils() {
 
     }
+
+    private static final String P_VALUE = "p-value";
 
     /**
      * Calculate the sum of the data using a functional operator.
@@ -1157,19 +1166,8 @@ public strictfp final class StatUtils {
      * @return the bin edges
      */
     public static double[] histogramBinEdges(int numBins, double... data) throws InsufficientDataException {
-        Double min = null;
-        Double max = null;
-        for (final double d : data) {
-            if (min == null || d < min) {
-                min = d;
-            }
-            if (max == null || d > max) {
-                max = d;
-            }
-        }
-        if (min == null) {
-            throw InsufficientDataException.createForArray();
-        }
+        double min = min(data);
+        double max = max(data);
         return ArrayUtils.linearlySpaced(min, max, numBins);
     }
 
@@ -1181,19 +1179,8 @@ public strictfp final class StatUtils {
      * @return the bin edges
      */
     public static double[] histogramBinEdges(BinWidthEstimator estimator, double... data) throws InsufficientDataException {
-        Double min = null;
-        Double max = null;
-        for (final double d : data) {
-            if (min == null || d < min) {
-                min = d;
-            }
-            if (max == null || d > max) {
-                max = d;
-            }
-        }
-        if (min == null) {
-            throw InsufficientDataException.createForArray();
-        }
+        double min = min(data);
+        double max = max(data);
         int nEqualBins = Math.max(1, (int) Math.ceil((max - min) / estimator.estimate(data)));
         return ArrayUtils.linearlySpaced(min, max, nEqualBins + 1);
     }
@@ -1206,19 +1193,8 @@ public strictfp final class StatUtils {
      * @return the bin edges
      */
     public static Histogram histogram(BinWidthEstimator estimator, double... data) throws InsufficientDataException {
-        Double min = null;
-        Double max = null;
-        for (final double d : data) {
-            if (min == null || d < min) {
-                min = d;
-            }
-            if (max == null || d > max) {
-                max = d;
-            }
-        }
-        if (min == null) {
-            throw InsufficientDataException.createForArray();
-        }
+        double min = min(data);
+        double max = max(data);
         final int nEqualBins = Math.max(1, (int) Math.ceil((max - min) / estimator.estimate(data)));
         return histogram(ArrayUtils.linearlySpaced(min, max, nEqualBins + 1), data);
     }
@@ -1231,19 +1207,8 @@ public strictfp final class StatUtils {
      * @return the histogram of the data
      */
     public static Histogram histogram(int numBins, double... data) {
-        Double min = null;
-        Double max = null;
-        for (final double d : data) {
-            if (min == null || d < min) {
-                min = d;
-            }
-            if (max == null || d > max) {
-                max = d;
-            }
-        }
-        if (min == null) {
-            throw InsufficientDataException.createForArray();
-        }
+        double min = min(data);
+        double max = max(data);
         return histogram(ArrayUtils.linearlySpaced(min, max, numBins + 1), data);
 
     }
@@ -1488,5 +1453,404 @@ public strictfp final class StatUtils {
         return 2.0 * (q3q1[0] - q3q1[1]) * Math.pow(data.length, -1. / 3);
     }
 
+    /**
+     * @param values the values to check
+     * @return whether any of the values are NaN
+     */
+    public static boolean containsNaN(double[] values) {
+        for (final double v : values) {
+            if (Double.isNaN(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    /**
+     * @param values the values to check
+     * @return whether any of the values are non-finite
+     */
+    public static boolean containsNonFinite(double[] values) {
+        for (final double v : values) {
+            if (!Double.isFinite(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param values the index to value getter
+     * @param size   the size of the source where the getter comes from
+     * @return whether any of the values are NaN
+     */
+    public static boolean containsNaN(IntToDoubleFunction values, int size) {
+        for (int i = 0; i < size; ++i) {
+            final double v = values.applyAsDouble(i);
+            if (Double.isNaN(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param values the index to value getter
+     * @param size   the size of the source where the getter comes from
+     * @return whether any of the values are non-finite
+     */
+    public static boolean containsNonFinite(IntToDoubleFunction values, int size) {
+        for (int i = 0; i < size; ++i) {
+            final double v = values.applyAsDouble(i);
+            if (!Double.isFinite(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param values the values to check
+     * @return whether all of the values are the same in the values
+     */
+    public static boolean isConstant(double[] values) {
+        double v = values[0];
+        for (int i = 1; i < values.length; ++i) {
+            if (v != values[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param values the index to value getter
+     * @param size   the size of the source where the getter comes from
+     * @return whether all of the values are the same in the values
+     */
+    public static boolean isConstant(IntToDoubleFunction values, int size) {
+        double v = values.applyAsDouble(0);
+        for (int i = 1; i < size; ++i) {
+            if (v != values.applyAsDouble(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Compare the skewness of these values with that of a normal distribution.
+     * The method is adapted from SciPy
+     *
+     * @param values the values to check
+     * @return a named-tuple containing the Z-statistic ("statistic") and p-value ("p-value")
+     */
+    public static NamedDoubleTuple skewTest(double[] values) {
+        double b2 = skewness(values);
+        int n = values.length;
+        if (n < 8) {
+            throw new ArithmeticException("Skew test is not valid with fewer than 8 samples");
+        }
+        double y = b2 * Math.sqrt(((n + 1) * (n + 3)) / (6.0 * (n - 2)));
+        double beta2 = (3.0 * (n * n + 27 * n - 70) * (n + 1) * (n + 3) /
+                ((n - 2.0) * (n + 5) * (n + 7) * (n + 9)));
+        double W2 = -1 + Math.sqrt(2 * (beta2 - 1));
+        double delta = 1 / Math.sqrt(0.5 * Math.log(W2));
+        double alpha = Math.sqrt(2.0 / (W2 - 1));
+
+        y = y == 0 ? 1 : y;
+
+        double Z = delta * Math.log(y / alpha + Math.sqrt(Math.pow(y / alpha, 2) + 1));
+        return Tuple.namedTuple("statistic", Z, P_VALUE, 2 * NormalDistributions.calculateSF(Math.abs(Z)));
+    }
+
+
+    private static final double PRECISION_THRESHOLD = 1e-13;
+
+    /**
+     * Pearson's correlation of two continuous series of data. Method adapted from SciPy
+     *
+     * @param x    the x index-to-value getter
+     * @param y    the y index-to-value getter
+     * @param size the number of elements
+     * @return the Pearson's correlation between x and y
+     */
+    public static double pearsonsCorrelation(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+        if (size < 2) {
+            throw new ArithmeticException("must be at least 2 values");
+        }
+        if (isConstant(x, size) || isConstant(y, size)) {
+            System.err.println("x or y values are constant");
+            return Double.NaN;
+        }
+        if (size == 2) {
+            return Math.signum(x.applyAsDouble(1) - x.applyAsDouble(0)) * Math.signum(y.applyAsDouble(1) - y.applyAsDouble(0));
+        }
+        double xMean = mean(x, size);
+        double yMean = mean(y, size);
+
+        double normXM = 0;
+        double normYM = 0;
+        double[] xm = new double[size];
+        double[] ym = new double[size];
+        for (int i = 0; i < size; ++i) {
+            double _x = (x.applyAsDouble(i) - xMean);
+            normXM += _x * _x;
+            double _y = (y.applyAsDouble(i) - yMean);
+            normYM += _y * _y;
+            xm[i] = _x;
+            ym[i] = _y;
+        }
+        normXM = Math.sqrt(normXM);
+        normYM = Math.sqrt(normYM);
+
+        if (normXM < PRECISION_THRESHOLD * Math.abs(xMean) || normYM < PRECISION_THRESHOLD * Math.abs(normYM)) {
+            System.err.println("Precision loss as all the values are close to the mean");
+        }
+
+        double r = 0;
+        for (int i = 0; i < size; ++i) {
+            double _x = xm[i] / normXM;
+            double _y = ym[i] / normYM;
+            r += _x * _y;
+        }
+        r = Math.max(min(r, 1.0), -1.0);
+        return r;
+    }
+
+    /**
+     * Pearson's correlation of two continuous series of data. Method adapted from SciPy
+     *
+     * @param x    the x index-to-value getter
+     * @param y    the y index-to-value getter
+     * @param size the number of elements
+     * @return a named-tuple containing the correlation efficient ("coeff") and the p-value ("p-value")
+     */
+    public static NamedDoubleTuple pearsonsCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+        if (size < 2) {
+            throw new ArithmeticException("must be at least 2 values");
+        }
+        if (isConstant(x, size) || isConstant(y, size)) {
+            System.err.println("x or y values are constant");
+            return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
+        }
+        if (size == 2) {
+            return Tuple.namedTuple("coeff", Math.signum(x.applyAsDouble(1) - x.applyAsDouble(0)) * Math.signum(y.applyAsDouble(1) - y.applyAsDouble(0)), P_VALUE, 1);
+        }
+        double xMean = mean(x, size);
+        double yMean = mean(y, size);
+
+        double normXM = 0;
+        double normYM = 0;
+        double[] xm = new double[size];
+        double[] ym = new double[size];
+        for (int i = 0; i < size; ++i) {
+            double _x = (x.applyAsDouble(i) - xMean);
+            normXM += _x * _x;
+            double _y = (y.applyAsDouble(i) - yMean);
+            normYM += _y * _y;
+            xm[i] = _x;
+            ym[i] = _y;
+        }
+        normXM = Math.sqrt(normXM);
+        normYM = Math.sqrt(normYM);
+        double threshold = 1e-13;
+        if (normXM < threshold * Math.abs(xMean) || normYM < threshold * Math.abs(normYM)) {
+            System.err.println("Precision loss as all the values are close to the mean");
+        }
+
+        double r = 0;
+        for (int i = 0; i < size; ++i) {
+            double _x = xm[i] / normXM;
+            double _y = ym[i] / normYM;
+            r += _x * _y;
+        }
+        r = Math.max(min(r, 1.0), -1.0);
+        double ab = size / 2. - 1;
+        double prob = 2 * Cephes.btdtr(ab, ab, 0.5 * (1 - Math.abs((r))));
+        return Tuple.namedTuple("coeff", r, P_VALUE, prob);
+    }
+
+    private static double[] rankDataOrdinal(int size, int[] order) {
+        final double[] ranks = new double[size];
+        for (int i = 0; i < order.length; ++i) {
+            ranks[order[i]] = i;
+        }
+        for (int i = 0; i < order.length; ++i) {
+            ranks[i] = ranks[i] + 1;
+        }
+        return ranks;
+    }
+
+    private static double[] rankDataAverage(IntToDoubleFunction getter, int size, int[] order) {
+        final double[] rank = new double[size];
+        int j = 0;
+        while (j < size) {
+            int start = j;
+            double prev = getter.applyAsDouble(order[start]);
+            ++j;
+            while (j < size) {
+                double current = getter.applyAsDouble(order[j]);
+                if (current != prev) {
+                    break;
+                }
+                ++j;
+            }
+            for (int i = start; i < j; ++i) {
+                rank[order[i]] = (j + start + 1) * .5;
+            }
+        }
+        return rank;
+    }
+
+    private static double[] rankDataDense(IntToDoubleFunction getter, int size, int[] order) {
+        final double[] rank = new double[size];
+        int k = 0;
+        int j = 0;
+        while (j < size) {
+            int start = j;
+            double prev = getter.applyAsDouble(order[start]);
+            ++j;
+            while (j < size) {
+                double current = getter.applyAsDouble(order[j]);
+                if (current != prev) {
+                    break;
+                }
+                ++j;
+            }
+            ++k;
+            for (int i = start; i < j; ++i) {
+                rank[order[i]] = k;
+            }
+        }
+        return rank;
+    }
+
+    private static double[] rankDataMin(IntToDoubleFunction getter, int size, int[] order) {
+        final double[] rank = new double[size];
+        int j = 0;
+        while (j < size) {
+            int start = j;
+            double prev = getter.applyAsDouble(order[start]);
+            ++j;
+            while (j < size) {
+                double current = getter.applyAsDouble(order[j]);
+                if (current != prev) {
+                    break;
+                }
+                ++j;
+            }
+            for (int i = start; i < j; ++i) {
+                rank[order[i]] = start + 1;
+            }
+
+        }
+        return rank;
+    }
+
+    private static double[] rankDataMax(IntToDoubleFunction getter, int size, int[] order) {
+        final double[] rank = new double[size];
+        int j = 0;
+        while (j < size) {
+            int start = j;
+            double prev = getter.applyAsDouble(order[start]);
+            ++j;
+            while (j < size) {
+                double current = getter.applyAsDouble(order[j]);
+                if (current != prev) {
+                    break;
+                }
+                ++j;
+            }
+            for (int i = start; i < j; ++i) {
+                rank[order[i]] = j;
+            }
+
+        }
+        return rank;
+    }
+
+    /**
+     * Assign ranks to data
+     *
+     * @param getter the index-to-value getter
+     * @param size   the size of the source values
+     * @param method the rank method
+     * @return the ranks of the values
+     */
+    public static double[] rankData(IntToDoubleFunction getter, int size, RankMethod method) {
+        final int[] order = ArrayUtils.intRange(size);
+        if (method == RankMethod.ORDINAL) {
+            MergeSort.argSort(order, getter);
+        } else {
+            DualPivotQuickSort.argSort(order, getter, true);
+        }
+        switch (method) {
+            case ORDINAL:
+                return rankDataOrdinal(size, order);
+            case AVERAGE:
+                return rankDataAverage(getter, size, order);
+            case DENSE:
+                return rankDataDense(getter, size, order);
+            case MIN:
+                return rankDataMin(getter, size, order);
+            case MAX:
+                return rankDataMax(getter, size, order);
+            default:
+                throw new UnsupportedOperationException();
+
+        }
+
+    }
+
+    public static double[] rankData(IntToDoubleFunction getter, int size) {
+        return rankData(getter, size, RankMethod.AVERAGE);
+    }
+
+    public static double correlationCoefficient(double[] x, double[] y) {
+        double meanX = mean(x);
+        double meanY = mean(y);
+        double xm_ym = 0;
+        double xm_xm = 0;
+        double ym_ym = 0;
+        for (int idx = 0; idx < x.length; ++idx) {
+            double xm = x[idx] - meanX;
+            double ym = y[idx] - meanY;
+            xm_ym += xm * ym;
+            xm_xm += xm * xm;
+            ym_ym += ym * ym;
+        }
+
+        return xm_ym / Math.sqrt(xm_xm * ym_ym);
+    }
+
+
+    public static double spearmansCorrelation(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+        if (size <= 1) {
+            return Double.NaN;
+        }
+        if (isConstant(x, size) || isConstant(y, size)) {
+            System.err.println("x or y values are constant");
+            return Double.NaN;
+        }
+        double[] xRanks = rankData(x, size);
+        double[] yRanks = rankData(y, size);
+
+        return correlationCoefficient(xRanks, yRanks);
+    }
+
+    public static NamedDoubleTuple spearmansCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+        if (size <= 1) {
+            return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
+        }
+        if (isConstant(x, size) || isConstant(y, size)) {
+            System.err.println("x or y values are constant");
+            return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
+        }
+        double[] xRanks = rankData(x, size);
+        double[] yRanks = rankData(y, size);
+        double c = correlationCoefficient(xRanks, yRanks);
+        int dof = size - 2;
+        return Tuple.namedTuple("coeff", c, P_VALUE, 2 * TDistributions.SF(Math.abs(c * Math.sqrt(Math.max(0, (dof / ((c + 1.0) * (1.0 - c)))))), dof));
+    }
 }

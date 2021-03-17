@@ -115,7 +115,7 @@ strictfp final class CephesImpl {
          * @param n     the length of the series
          * @return the solution to the Chebyshev series
          */
-        public static double chbevl(double x, double[] array, int n) {
+        static double chbevl(double x, double[] array, int n) {
             double b0 = array[0], b1 = 0, b2 = 0;
             int p = 0;
 
@@ -390,7 +390,7 @@ strictfp final class CephesImpl {
                 -9.73655226040941223894E-4,
         };
 
-        public static double dawsn(double xx) {
+        static double dawsn(double xx) {
             double x, y;
             int sign;
 
@@ -639,7 +639,7 @@ strictfp final class CephesImpl {
         /* Gamma function computed by Stirling's formula.
          * The polynomial STIR is valid for 33 <= x <= 172.
          */
-        public static double stirf(double x) {
+        static double stirf(double x) {
             double y, w, v;
 
             if (x >= MAXGAM) {
@@ -659,7 +659,7 @@ strictfp final class CephesImpl {
         }
 
 
-        public static double Gamma(double x) throws OverflowException {
+        static double Gamma(double x) throws OverflowException {
             double p, q, z;
             int i;
             int sgngam = 1;
@@ -974,8 +974,7 @@ strictfp final class CephesImpl {
         static final int K = 25;
         static final int N = 25;
 
-        static final double[][] d
-                =
+        static final double[][] d =
 
                 {
                         {
@@ -1056,7 +1055,7 @@ strictfp final class CephesImpl {
                 };
 
 
-        public static double igam(double a, double x) throws DomainException {
+        static double igam(double a, double x) throws DomainException {
             double absxma_a;
 
             if (x < 0 || a < 0) {
@@ -1095,7 +1094,7 @@ strictfp final class CephesImpl {
         }
 
 
-        public static double igamc(double a, double x) throws DomainException {
+        static double igamc(double a, double x) throws DomainException {
             double absxma_a;
 
             if (x < 0 || a < 0) {
@@ -1155,7 +1154,7 @@ strictfp final class CephesImpl {
          * corrected from (15) and (16) in [2] by replacing exp(x - a) with
          * exp(a - x).
          */
-        public static double igam_fac(double a, double x) throws UnderflowException {
+        static double igam_fac(double a, double x) throws UnderflowException {
             double ax, fac, res, num;
 
             if (abs(a - x) > 0.4 * abs(a)) {
@@ -1181,7 +1180,7 @@ strictfp final class CephesImpl {
 
 
         /* Compute igamc using DLMF 8.9.2. */
-        public static double igamc_continued_fraction(double a, double x) {
+        static double igamc_continued_fraction(double a, double x) {
             int i;
             double ans, ax, c, yc, r, t, y, z;
             double pk, pkm1, pkm2, qk, qkm1, qkm2;
@@ -1234,7 +1233,7 @@ strictfp final class CephesImpl {
 
 
         /* Compute igam using DLMF 8.11.4. */
-        public static double igam_series(double a, double x) {
+        static double igam_series(double a, double x) {
             int i;
             double ans, ax, c, r;
 
@@ -1265,7 +1264,7 @@ strictfp final class CephesImpl {
         /* Compute igamc using DLMF 8.7.3. This is related to the series in
          * igam_series but extra care is taken to avoid cancellation.
          */
-        public static double igamc_series(double a, double x) {
+        static double igamc_series(double a, double x) {
             int n;
             double fac = 1;
             double sum = 0;
@@ -1287,7 +1286,7 @@ strictfp final class CephesImpl {
 
 
         /* Compute igam/igamc using DLMF 8.12.3/8.12.4. */
-        public static double asymptotic_series(double a, double x, int func) {
+        static double asymptotic_series(double a, double x, int func) {
             int k, n, sgn;
             int maxpow = 0;
             double lambda = x / a;
@@ -1408,7 +1407,7 @@ strictfp final class CephesImpl {
          * @param y0 the value to apply the inverse of normal distribution function
          * @return the inverse of normal distribution function at y0
          */
-        public static double ndtri(double y0) throws DomainException {
+        static double ndtri(double y0) throws DomainException {
             double x, y, z, y2, x0, x1;
             int code;
 
@@ -1640,7 +1639,7 @@ strictfp final class CephesImpl {
                 7.78576235018280120474E-1
         };
 
-        public static double i1(double x) {
+        static double i1(double x) {
             double y, z;
 
             z = abs(x);
@@ -1688,7 +1687,7 @@ strictfp final class CephesImpl {
          *
          */
 
-        public static double i1e(double x) {
+        static double i1e(double x) {
             double y, z;
 
             z = abs(x);
@@ -1781,7 +1780,7 @@ strictfp final class CephesImpl {
                 8.04490411014108831608E-1
         };
 
-        public static double i0(double x) {
+        static double i0(double x) {
             double y;
 
             if (x < 0)
@@ -1796,7 +1795,7 @@ strictfp final class CephesImpl {
         }
 
 
-        public static double i0e(double x) {
+        static double i0e(double x) {
             double y;
 
             if (x < 0)
@@ -1907,7 +1906,7 @@ strictfp final class CephesImpl {
          * k1 domain          x <= 0          NPY_INFINITY
          *
          */
-        public static double k1(double x) {
+        static double k1(double x) {
             double y, z;
 
             if (x == 0.0) {
@@ -1958,7 +1957,7 @@ strictfp final class CephesImpl {
          * See k1().
          *
          */
-        public static double k1e(double x) {
+        static double k1e(double x) {
             double y;
 
             if (x == 0.0) {
@@ -2118,7 +2117,7 @@ strictfp final class CephesImpl {
          * @param a the value to calculate x of
          * @return the normal distribution function of x
          */
-        public static double ndtr(double a) throws DomainException {
+        static double ndtr(double a) throws DomainException {
             double x, y, z;
 
             if (Double.isNaN(a)) {
@@ -2183,7 +2182,7 @@ strictfp final class CephesImpl {
          * @param a the value to calculate the complementary error function
          * @return the complementary error function of a
          */
-        public static double erfc(double a) throws DomainException, UnderflowException {
+        static double erfc(double a) throws DomainException, UnderflowException {
             final double[] P = {
                     2.46196981473530512524E-10,
                     5.64189564831068821977E-1,
@@ -2306,7 +2305,7 @@ strictfp final class CephesImpl {
          * @param x the value x
          * @return the error function of x
          */
-        public static double erf(double x) throws DomainException {
+        static double erf(double x) throws DomainException {
             final double[] T = {
                     9.60497373987051638749E0,
                     9.00260197203842689217E1,
@@ -2400,7 +2399,7 @@ strictfp final class CephesImpl {
          * @param N    degree
          * @return the polynomial of x
          */
-        public static double polevl(double x, double[] coef, int N) {
+        static double polevl(double x, double[] coef, int N) {
             int i = 0;
             double ans = coef[0];
             while (i < N) {
@@ -2422,7 +2421,7 @@ strictfp final class CephesImpl {
          * @param N    degree
          * @return the polynomial of x
          */
-        public static double p1evl(double x, double[] coef, int N) {
+        static double p1evl(double x, double[] coef, int N) {
             int i = 0;
             double ans = x + coef[0];
             final int m = N - 1;
@@ -2468,7 +2467,7 @@ strictfp final class CephesImpl {
                 6.0118660497603843919306E1,
         };
 
-        public static double log1p(double x) {
+        static double log1p(double x) {
             double z;
 
             z = 1.0 + x;
@@ -2481,7 +2480,7 @@ strictfp final class CephesImpl {
 
 
         /* log(1 + x) - x */
-        public static double log1pmx(double x) {
+        static double log1pmx(double x) {
             if (abs(x) < 0.5) {
                 int n;
                 double xfac = x;
@@ -2522,7 +2521,7 @@ strictfp final class CephesImpl {
                 2.0000000000000000000897E0,
         };
 
-        public static double expm1(double x) {
+        static double expm1(double x) {
             double r, xx;
 
             if (!Double.isInfinite(x)) {
@@ -2559,7 +2558,7 @@ strictfp final class CephesImpl {
                         4.1666666666666666609054E-2,
                 };
 
-        public static double cosm1(double x) {
+        static double cosm1(double x) {
             double xx;
 
             if ((x < -Cephes.NPY_PI_4) || (x > Cephes.NPY_PI_4))
@@ -2571,7 +2570,7 @@ strictfp final class CephesImpl {
 
 
         /* Compute lgam(x + 1) around x = 0 using its Taylor series. */
-        public static double lgam1p_taylor(double x) {
+        static double lgam1p_taylor(double x) {
             int n;
             double xfac, coeff, res;
 
@@ -2594,7 +2593,7 @@ strictfp final class CephesImpl {
 
 
         /* Compute lgam(x + 1). */
-        public static double lgam1p(double x) {
+        static double lgam1p(double x) {
             if (abs(x) <= 0.5) {
                 return lgam1p_taylor(x);
             } else if (abs(x - 1) < 0.5) {
@@ -2711,7 +2710,7 @@ strictfp final class CephesImpl {
          * @param x the value to get the function of
          * @return the Riemann zeta function
          */
-        public static double zetac(double x) {
+        static double zetac(double x) {
             if (Double.isNaN(x)) {
                 return x;
             } else if (x == Double.NEGATIVE_INFINITY) {
@@ -2735,7 +2734,7 @@ strictfp final class CephesImpl {
          * @param x the value
          * @return the Riemann zeta function of the value
          */
-        public static double riemann_zeta(double x) {
+        static double riemann_zeta(double x) {
             if (Double.isNaN(x)) {
                 return x;
             } else if (x == Double.NEGATIVE_INFINITY) {
@@ -2897,7 +2896,7 @@ strictfp final class CephesImpl {
          * @param x the value
          * @return the zeta function for a small negative value
          */
-        public static double zetac_smallneg(double x) {
+        static double zetac_smallneg(double x) {
             return polevl(x,
                     new double[]{
 
@@ -2926,7 +2925,7 @@ strictfp final class CephesImpl {
          * @param x the value to get the zeta function of
          * @return the zeta function, using reflection, of a value
          */
-        public static double zeta_reflection(double x) {
+        static double zeta_reflection(double x) {
             double base, large_term, small_term, hx, x_shift;
 
             hx = x / 2;
@@ -3033,7 +3032,7 @@ strictfp final class CephesImpl {
          * Direct inquiries to 30 Frost Street, Cambridge, MA 02140
          */
 
-        public static double zeta(double x, double q) throws DomainException, SingularException {
+        static double zeta(double x, double q) throws DomainException, SingularException {
             int i;
             double a, b, k, s, t, w;
             /* Expansion coefficients
@@ -3148,11 +3147,11 @@ strictfp final class CephesImpl {
 
             r = x % 2.0;
             if (r < 0.5) {
-                return s * sin(Cephes.M_PI * r);
+                return s * sin(Cephes.NPY_PI * r);
             } else if (r > 1.5) {
-                return s * sin(Cephes.M_PI * (r - 2.0));
+                return s * sin(Cephes.NPY_PI * (r - 2.0));
             } else {
-                return -s * sin(Cephes.M_PI * (r - 1.0));
+                return -s * sin(Cephes.NPY_PI * (r - 1.0));
             }
         }
 
@@ -3171,9 +3170,9 @@ strictfp final class CephesImpl {
                 return 0.0;
             }
             if (r < 1.0) {
-                return -sin(Cephes.M_PI * (r - 0.5));
+                return -sin(Cephes.NPY_PI * (r - 0.5));
             } else {
-                return sin(Cephes.M_PI * (r - 1.5));
+                return sin(Cephes.NPY_PI * (r - 1.5));
             }
         }
     }
@@ -9436,7 +9435,7 @@ strictfp final class CephesImpl {
                 return (pkm2);
             }
 
-            public double get(double n, double x) {
+            double get(double n, double x) {
 
                 nint = 0;            /* Flag for integer n */
                 sign = 1;            /* Flag for sign inversion */

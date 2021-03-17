@@ -2,10 +2,7 @@ package net.mahdilamb.dataframe.utils;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.IntPredicate;
-import java.util.function.IntToDoubleFunction;
-import java.util.function.IntToLongFunction;
-import java.util.function.IntUnaryOperator;
+import java.util.function.*;
 
 /*
 Copyright (c) 2009 The Go Authors. All rights reserved.
@@ -52,50 +49,65 @@ public final class IntroSort {
     }
 
     /**
-     * Return the indices that would sort the array
+     * Calculate the indices of sort and output as a double array. The args will be treated as the floor of the values
      *
-     * @param args      the original indices
-     * @param numArgs   the number of indices to sort
-     * @param data      the data to sort
-     * @param ascending whether to sort ascending or descending
+     * @param args the output args
+     * @param data the data whose sort to get
      */
-    public static void argSort(int[] args, int numArgs, double[] data, boolean ascending) {
-        if (ascending) {
-            quickSort(args, data, IntroSort::lessThan, numArgs);
-        } else {
-            quickSort(args, data, IntroSort::greaterThan, numArgs);
-        }
+    public static void argSort(double[] args, double[] data) {
+        quickSort(args, data, 0, args.length, maxDepth(args.length));
     }
 
     /**
-     * Return the indices that would sort the array
-     *
-     * @param args      the original indices
-     * @param numArgs   the number of indices to sort
-     * @param data      the data to sort
-     * @param ascending whether to sort ascending or descending
-     */
-    public static void argSort(int[] args, int numArgs, long[] data, boolean ascending) {
-        if (ascending) {
-            quickSort(args, data, IntroSort::lessThan, numArgs);
-        } else {
-            quickSort(args, data, IntroSort::greaterThan, numArgs);
-        }
-    }
-
-    /**
-     * Sort the integer arguments based using a functional approach
+     * Sort the double arguments based using a functional approach. The args will be treated as the floor of the values
      *
      * @param args      the args to sort
-     * @param numArgs   the size of the source (e.g. the length of an array, size of a list)
      * @param getter    the int to double function
      * @param ascending whether to sort ascending
      */
-    public static void argSort(int[] args, int numArgs, IntToDoubleFunction getter, boolean ascending) {
+    public static void argSort(double[] args, IntToDoubleFunction getter, boolean ascending) {
         if (ascending) {
-            quickSort(args, null, LessThan.fromDoubleGetter(getter), numArgs);
+            quickSort(args, null, LessThan.fromDoubleGetter(getter), 0, args.length, maxDepth(args.length));
         } else {
-            quickSort(args, null, LessThan.fromDoubleGetterReversed(getter), numArgs);
+            quickSort(args, null, LessThan.fromDoubleGetterReversed(getter), 0, args.length, maxDepth(args.length));
+        }
+    }
+
+    public static <T extends Comparable<T>> void argSort(double[] args, IntFunction<T> getter, boolean ascending) {
+        if (ascending) {
+            quickSort(args, null, (LessThan<T>) (data, leftIndex, rightIndex) -> getter.apply(leftIndex).compareTo(getter.apply(rightIndex)) < 0, 0, args.length, maxDepth(args.length));
+        } else {
+            quickSort(args, null, (LessThan<T>) (data, leftIndex, rightIndex) -> getter.apply(leftIndex).compareTo(getter.apply(rightIndex)) > 0, 0, args.length, maxDepth(args.length));
+        }
+    }
+
+    /**
+     * Return the indices that would sort the array
+     *
+     * @param args      the original indices
+     * @param data      the data to sort
+     * @param ascending whether to sort ascending or descending
+     */
+    public static void argSort(int[] args, double[] data, boolean ascending) {
+        if (ascending) {
+            quickSort(args, data, IntroSort::lessThan, args.length);
+        } else {
+            quickSort(args, data, IntroSort::greaterThan, args.length);
+        }
+    }
+
+    /**
+     * Return the indices that would sort the array
+     *
+     * @param args      the original indices
+     * @param data      the data to sort
+     * @param ascending whether to sort ascending or descending
+     */
+    public static void argSort(int[] args, long[] data, boolean ascending) {
+        if (ascending) {
+            quickSort(args, data, IntroSort::lessThan, args.length);
+        } else {
+            quickSort(args, data, IntroSort::greaterThan, args.length);
         }
     }
 
@@ -103,15 +115,29 @@ public final class IntroSort {
      * Sort the integer arguments based using a functional approach
      *
      * @param args      the args to sort
-     * @param numArgs   the size of the source (e.g. the length of an array, size of a list)
+     * @param getter    the int to double function
+     * @param ascending whether to sort ascending
+     */
+    public static void argSort(int[] args, IntToDoubleFunction getter, boolean ascending) {
+        if (ascending) {
+            quickSort(args, null, LessThan.fromDoubleGetter(getter), args.length);
+        } else {
+            quickSort(args, null, LessThan.fromDoubleGetterReversed(getter), args.length);
+        }
+    }
+
+    /**
+     * Sort the integer arguments based using a functional approach
+     *
+     * @param args      the args to sort
      * @param getter    the int to long function
      * @param ascending whether to sort ascending
      */
-    public static void argSort(int[] args, int numArgs, IntToLongFunction getter, boolean ascending) {
+    public static void argSort(int[] args, IntToLongFunction getter, boolean ascending) {
         if (ascending) {
-            quickSort(args, null, LessThan.fromLongGetter(getter), numArgs);
+            quickSort(args, null, LessThan.fromLongGetter(getter), args.length);
         } else {
-            quickSort(args, null, LessThan.fromLongGetterReversed(getter), numArgs);
+            quickSort(args, null, LessThan.fromLongGetterReversed(getter), args.length);
         }
     }
 
@@ -119,15 +145,14 @@ public final class IntroSort {
      * Sort the integer arguments based using a functional approach
      *
      * @param args      the args to sort
-     * @param numArgs   the size of the source (e.g. the length of an array, size of a list)
      * @param getter    the int to boolean function
      * @param ascending whether to sort ascending
      */
-    public static void argSort(int[] args, int numArgs, IntPredicate getter, boolean ascending) {
+    public static void argSort(int[] args, IntPredicate getter, boolean ascending) {
         if (ascending) {
-            quickSort(args, null, LessThan.fromBooleanGetter(getter), numArgs);
+            quickSort(args, null, LessThan.fromBooleanGetter(getter), args.length);
         } else {
-            quickSort(args, null, LessThan.fromBooleanGetterReversed(getter), numArgs);
+            quickSort(args, null, LessThan.fromBooleanGetterReversed(getter), args.length);
         }
     }
 
@@ -135,15 +160,14 @@ public final class IntroSort {
      * Return the indices that would sort the array
      *
      * @param args      the original indices
-     * @param numArgs   the number of indices to sort
      * @param data      the data to sort
      * @param ascending whether to sort ascending or descending
      */
-    public static void argSort(int[] args, int numArgs, int[] data, boolean ascending) {
+    public static void argSort(int[] args, int[] data, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, IntroSort::lessThan, numArgs);
+            quickSort(args, data, IntroSort::lessThan, args.length);
         } else {
-            quickSort(args, data, IntroSort::greaterThan, numArgs);
+            quickSort(args, data, IntroSort::greaterThan, args.length);
         }
     }
 
@@ -151,33 +175,31 @@ public final class IntroSort {
      * Return the indices that would sort the array
      *
      * @param args      the original indices
-     * @param numArgs   the number of indices to sort
      * @param data      the data to sort
      * @param ascending whether to sort ascending or descending
      */
-    public static void argSort(int[] args, int numArgs, boolean[] data, boolean ascending) {
+    public static void argSort(int[] args, boolean[] data, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, IntroSort::lessThan, numArgs);
+            quickSort(args, data, IntroSort::lessThan, args.length);
         } else {
-            quickSort(args, data, IntroSort::greaterThan, numArgs);
+            quickSort(args, data, IntroSort::greaterThan, args.length);
         }
     }
 
     /**
      * Return the indices that would sort the array
      *
+     * @param <T>       the type of the data
      * @param args      the original indices
-     * @param numArgs   the number of indices to sort
      * @param data      the data to sort
      * @param cmp       the comparator
      * @param ascending whether to sort ascending or descending
-     * @param <T>       the type of the data
      */
-    public static <T> void argSort(int[] args, int numArgs, T[] data, Comparator<T> cmp, boolean ascending) {
+    public static <T> void argSort(int[] args, T[] data, Comparator<T> cmp, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, LessThan.fromArray(cmp), numArgs);
+            quickSort(args, data, LessThan.fromArray(cmp), args.length);
         } else {
-            quickSort(args, data, LessThan.fromArray(cmp.reversed()), numArgs);
+            quickSort(args, data, LessThan.fromArray(cmp.reversed()), args.length);
         }
     }
 
@@ -185,17 +207,16 @@ public final class IntroSort {
      * Return the indices that would sort the list
      *
      * @param args      the original indices
-     * @param numArgs   the number of indices to sort
      * @param data      the data to sort
      * @param cmp       the comparator
      * @param ascending whether to sort ascending or descending
      * @param <T>       the type of the data
      */
-    public static <T> void argSort(int[] args, int numArgs, List<T> data, Comparator<T> cmp, boolean ascending) {
+    public static <T> void argSort(int[] args, List<T> data, Comparator<T> cmp, boolean ascending) {
         if (ascending) {
-            quickSort(args, data, LessThan.fromList(cmp), numArgs);
+            quickSort(args, data, LessThan.fromList(cmp), args.length);
         } else {
-            quickSort(args, data, LessThan.fromList(cmp.reversed()), numArgs);
+            quickSort(args, data, LessThan.fromList(cmp.reversed()), args.length);
         }
     }
 
@@ -203,13 +224,12 @@ public final class IntroSort {
      * Return the indices that would sort the array
      *
      * @param args      the original indices
-     * @param numArgs   the number of indices to sort
      * @param data      the data to sort
      * @param ascending whether to sort ascending or descending
      * @param <T>       the type of the data
      */
-    public static <T extends Comparable<T>> void argSort(int[] args, int numArgs, T[] data, boolean ascending) {
-        argSort(args, numArgs, data, Comparator.naturalOrder(), ascending);
+    public static <T extends Comparable<T>> void argSort(int[] args, T[] data, boolean ascending) {
+        argSort(args, data, Comparator.naturalOrder(), ascending);
     }
 
     /**
@@ -291,9 +311,25 @@ public final class IntroSort {
         }
     }
 
+    private static <T> void insertionSort(double[] args, T data, LessThan<T> lessThan, int a, int b) {
+        for (int i = a + 1; i < b; ++i) {
+            for (int j = i; j > a && lessThan.test(data, (int) args[j], (int) args[j - 1]); --j) {
+                Sorts.swap(args, j, j - 1);
+            }
+        }
+    }
+
     private static void insertionSort(int[] args, double[] data, int a, int b) {
         for (int i = a + 1; i < b; ++i) {
             for (int j = i; j > a && data[args[j]] < data[args[j - 1]]; --j) {
+                Sorts.swap(args, j, j - 1);
+            }
+        }
+    }
+
+    private static void insertionSort(double[] args, double[] data, int a, int b) {
+        for (int i = a + 1; i < b; ++i) {
+            for (int j = i; j > a && data[(int) args[j]] < data[(int) args[j - 1]]; --j) {
                 Sorts.swap(args, j, j - 1);
             }
         }
@@ -309,7 +345,7 @@ public final class IntroSort {
 
     private static <T> void siftDown(int[] args, T data, LessThan<T> comparator, int lo, int hi, int first) {
         int root = lo;
-        for (; ; ) {
+        while (true) {
             int child = 2 * root + 1;
             if (child >= hi) {
                 break;
@@ -325,9 +361,27 @@ public final class IntroSort {
         }
     }
 
+    private static <T> void siftDown(double[] args, T data, LessThan<T> comparator, int lo, int hi, int first) {
+        int root = lo;
+        while (true) {
+            int child = 2 * root + 1;
+            if (child >= hi) {
+                break;
+            }
+            if (child + 1 < hi && comparator.test(data, (int) args[first + child], (int) args[first + child + 1])) {
+                ++child;
+            }
+            if (!comparator.test(data, (int) args[first + root], (int) args[first + child])) {
+                return;
+            }
+            Sorts.swap(args, first + root, first + child);
+            root = child;
+        }
+    }
+
     private static void siftDown(int[] args, double[] data, int lo, int hi, int first) {
         int root = lo;
-        for (; ; ) {
+        while (true) {
             int child = 2 * root + 1;
             if (child >= hi) {
                 break;
@@ -343,9 +397,27 @@ public final class IntroSort {
         }
     }
 
+    private static void siftDown(double[] args, double[] data, int lo, int hi, int first) {
+        int root = lo;
+        while (true) {
+            int child = 2 * root + 1;
+            if (child >= hi) {
+                break;
+            }
+            if (child + 1 < hi && data[(int) args[first + child]] < data[(int) args[first + child + 1]]) {
+                ++child;
+            }
+            if (data[(int) args[first + root]] >= data[(int) args[first + child]]) {
+                return;
+            }
+            Sorts.swap(args, first + root, first + child);
+            root = child;
+        }
+    }
+
     private static void siftDown(double[] data, int lo, int hi, int first) {
         int root = lo;
-        for (; ; ) {
+        while (true) {
             int child = 2 * root + 1;
             if (child >= hi) {
                 break;
@@ -377,7 +449,39 @@ public final class IntroSort {
         }
     }
 
+    private static <T> void heapSort(double[] args, T data, LessThan<T> comparator, int a, int b) {
+        int first = a,
+                lo = 0,
+                hi = b - a;
+        // Build heap with greatest element at top.
+        for (int i = (hi - 1) / 2; i >= 0; i--) {
+            siftDown(args, data, comparator, i, hi, first);
+        }
+
+        // Pop elements, largest first, into end of data.
+        for (int i = (hi - 1); i >= 0; i--) {
+            Sorts.swap(args, first, first + i);
+            siftDown(args, data, comparator, lo, i, first);
+        }
+    }
+
     private static void heapSort(int[] args, double[] data, int a, int b) {
+        int first = a,
+                lo = 0,
+                hi = b - a;
+        // Build heap with greatest element at top.
+        for (int i = (hi - 1) / 2; i >= 0; i--) {
+            siftDown(args, data, i, hi, first);
+        }
+
+        // Pop elements, largest first, into end of data.
+        for (int i = (hi - 1); i >= 0; i--) {
+            Sorts.swap(args, first, first + i);
+            siftDown(args, data, lo, i, first);
+        }
+    }
+
+    private static void heapSort(double[] args, double[] data, int a, int b) {
         int first = a,
                 lo = 0,
                 hi = b - a;
@@ -441,6 +545,22 @@ public final class IntroSort {
         // now data[m0] <= data[m1] <= data[m2]
     }
 
+    private static <T> void medianOfThree(double[] args, T data, LessThan<T> lt, int m1, int m0, int m2) {
+        // sort 3 elements
+        if (lt.test(data, (int) args[m1], (int) args[m0])) {
+            Sorts.swap(args, m1, m0);
+        }
+        // data[m0] <= data[m1]
+        if (lt.test(data, (int) args[m2], (int) args[m1])) {
+            Sorts.swap(args, m2, m1);
+            // data[m0] <= data[m2] && data[m1] < data[m2]
+            if (lt.test(data, (int) args[m1], (int) args[m0])) {
+                Sorts.swap(args, m1, m0);
+            }
+        }
+        // now data[m0] <= data[m1] <= data[m2]
+    }
+
     private static void medianOfThree(int[] args, double[] data, int m1, int m0, int m2) {
         // sort 3 elements
         if (data[args[m1]] < data[args[m0]]) {
@@ -451,6 +571,22 @@ public final class IntroSort {
             Sorts.swap(args, m2, m1);
             // data[m0] <= data[m2] && data[m1] < data[m2]
             if (data[args[m1]] < data[args[m0]]) {
+                Sorts.swap(args, m1, m0);
+            }
+        }
+        // now data[m0] <= data[m1] <= data[m2]
+    }
+
+    private static void medianOfThree(double[] args, double[] data, int m1, int m0, int m2) {
+        // sort 3 elements
+        if (data[(int) args[m1]] < data[(int) args[m0]]) {
+            Sorts.swap(args, m1, m0);
+        }
+        // data[m0] <= data[m1]
+        if (data[(int) args[m2]] < data[(int) args[m1]]) {
+            Sorts.swap(args, m2, m1);
+            // data[m0] <= data[m2] && data[m1] < data[m2]
+            if (data[(int) args[m1]] < data[(int) args[m0]]) {
                 Sorts.swap(args, m1, m0);
             }
         }
@@ -470,7 +606,7 @@ public final class IntroSort {
     }
 
     private static void quickSort(double[] data, int a, int b, int maxDepth) {
-        for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
+        while (b - a > 12) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
                 heapSort(data, a, b);
                 return;
@@ -499,13 +635,16 @@ public final class IntroSort {
                 int pivot = a;
                 int _a = a + 1, c = b - 1;
 
-                for (; _a < c && data[_a] < data[pivot]; _a++) {
+                while (_a < c && data[_a] < data[pivot]) {
+                    _a++;
                 }
                 int _b = _a;
-                for (; ; ) {
-                    for (; _b < c && data[pivot] >= data[_b]; _b++) { // data[_b] <= pivot
+                while (true) {
+                    while (_b < c && data[pivot] >= data[_b]) { // data[_b] <= pivot
+                        _b++;
                     }
-                    for (; _b < c && data[pivot] < data[c - 1]; c--) { // data[c-1] > pivot
+                    while (_b < c && data[pivot] < data[c - 1]) { // data[c-1] > pivot
+                        c--;
                     }
                     if (_b >= c) {
                         break;
@@ -546,10 +685,12 @@ public final class IntroSort {
                     // Add invariant:
                     //	data[_a <= i < _b] unexamined
                     //	data[_b <= i < c] = pivot
-                    for (; ; ) {
-                        for (; _a < _b && data[_b - 1] >= data[pivot]; _b--) { // data[_b] == pivot
+                    while (true) {
+                        while (_a < _b && data[_b - 1] >= data[pivot]) { // data[_b] == pivot
+                            _b--;
                         }
-                        for (; _a < _b && data[_a] < data[pivot]; _a++) { // data[_a] < pivot
+                        while (_a < _b && data[_a] < data[pivot]) { // data[_a] < pivot
+                            _a++;
                         }
                         if (_a >= _b) {
                             break;
@@ -589,7 +730,7 @@ public final class IntroSort {
     }
 
     private static <T> void quickSort(int[] args, T data, LessThan<T> lt, int a, int b, int maxDepth) {
-        for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
+        while (b - a > 12) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
                 heapSort(args, data, lt, a, b);
                 return;
@@ -618,13 +759,16 @@ public final class IntroSort {
                 int pivot = a;
                 int _a = a + 1, c = b - 1;
 
-                for (; _a < c && lt.test(data, args[_a], args[pivot]); _a++) {
+                while (_a < c && lt.test(data, args[_a], args[pivot])) {
+                    _a++;
                 }
                 int _b = _a;
-                for (; ; ) {
-                    for (; _b < c && !(lt.test(data, args[pivot], args[_b])); _b++) { // data[_b] <= pivot
+                while (true) {
+                    while (_b < c && !(lt.test(data, args[pivot], args[_b]))) { // data[_b] <= pivot
+                        _b++;
                     }
-                    for (; _b < c && lt.test(data, args[pivot], args[c - 1]); c--) { // data[c-1] > pivot
+                    while (_b < c && lt.test(data, args[pivot], args[c - 1])) { // data[c-1] > pivot
+                        c--;
                     }
                     if (_b >= c) {
                         break;
@@ -665,10 +809,12 @@ public final class IntroSort {
                     // Add invariant:
                     //	data[_a <= i < _b] unexamined
                     //	data[_b <= i < c] = pivot
-                    for (; ; ) {
-                        for (; _a < _b && !lt.test(data, args[_b - 1], args[pivot]); _b--) { // data[_b] == pivot
+                    while (true) {
+                        while (_a < _b && !lt.test(data, args[_b - 1], args[pivot])) { // data[_b] == pivot
+                            --_b;
                         }
-                        for (; _a < _b && lt.test(data, args[_a], args[pivot]); _a++) { // data[_a] < pivot
+                        while (_a < _b && lt.test(data, args[_a], args[pivot])) { // data[_a] < pivot
+                            ++_a;
                         }
                         if (_a >= _b) {
                             break;
@@ -707,8 +853,132 @@ public final class IntroSort {
         }
     }
 
-    private static void quickSort(int[] args, double[] data, int a, int b, int maxDepth) {
-        for (; b - a > 12; ) { // Use ShellSort for slices <= 12 elements
+    private static <T> void quickSort(double[] args, T data, LessThan<T> lt, int a, int b, int maxDepth) {
+        while (b - a > 12) { // Use ShellSort for slices <= 12 elements
+            if (maxDepth == 0) {
+                heapSort(args, data, lt, a, b);
+                return;
+            }
+            maxDepth--;
+            int mlo, mhi;
+            //doPivot
+            {
+                int m = ((a + b) >> 1);
+                if (b - a > 40) {
+                    // Tukey's ``Ninther,'' median of three medians of three.
+                    int s = (b - a) / 8;
+                    medianOfThree(args, data, lt, a, a + s, a + 2 * s);
+                    medianOfThree(args, data, lt, m, m - s, m + s);
+                    medianOfThree(args, data, lt, b - 1, b - 1 - s, b - 1 - 2 * s);
+                }
+                medianOfThree(args, data, lt, a, m, b - 1);
+
+                // Invariants are:
+                //	data[a] = pivot (set up by ChoosePivot)
+                //	data[a < i < _a] < pivot
+                //	data[_a <= i < _b] <= pivot
+                //	data[_b <= i < c] unexamined
+                //	data[c <= i < b-1] > pivot
+                //	data[b-1] >= pivot
+                int pivot = a;
+                int _a = a + 1, c = b - 1;
+
+                while (_a < c && lt.test(data, (int) args[_a], (int) args[pivot])) {
+                    _a++;
+                }
+                int _b = _a;
+                while (true) {
+                    while (_b < c && !(lt.test(data, (int) args[pivot], (int) args[_b]))) { // data[_b] <= pivot
+                        _b++;
+                    }
+                    while (_b < c && lt.test(data, (int) args[pivot], (int) args[c - 1])) { // data[c-1] > pivot
+                        c--;
+                    }
+                    if (_b >= c) {
+                        break;
+                    }
+                    // data[_b] > pivot; data[c-1] <= pivot
+                    Sorts.swap(args, _b, c - 1);
+                    _b++;
+                    c--;
+                }
+                // If b-c<3 then there are duplicates (by property of median of nine).
+                // Let's be _a bit more conservative, and set border to 5.
+                boolean protect = b - c < 5;
+                if (!protect && b - c < (b - a) / 4) {
+                    // Lets test some points for equality to pivot
+                    int dups = 0;
+                    if (!(lt.test(data, (int) args[pivot], (int) args[_b - 1]))) { // data[b-1] = pivot
+                        Sorts.swap(args, c, b - 1);
+                        c++;
+                        dups++;
+                    }
+                    if (!(lt.test(data, (int) args[_b - 1], (int) args[pivot]))) { // data[_b-1] = pivot
+                        _b--;
+                        dups++;
+                    }
+                    // m-a = (b-a)/2 > 6
+                    // _b-a > (b-a)*3/4-1 > 8
+                    // ==> m < _b ==> data[m] <= pivot
+                    if (!(lt.test(data, (int) args[m], (int) args[pivot]))) { // data[m] = pivot
+                        Sorts.swap(args, m, _b - 1);
+                        _b--;
+                        dups++;
+                    }
+                    // if at least 2 points are equal to pivot, assume skewed distribution
+                    protect = dups > 1;
+                }
+                if (protect) {
+                    // Protect against _a lot of duplicates
+                    // Add invariant:
+                    //	data[_a <= i < _b] unexamined
+                    //	data[_b <= i < c] = pivot
+                    while (true) {
+                        while (_a < _b && !lt.test(data, (int) args[_b - 1], (int) args[pivot])) { // data[_b] == pivot
+                            --_b;
+                        }
+                        while (_a < _b && lt.test(data, (int) args[_a], (int) args[pivot])) { // data[_a] < pivot
+                            ++_a;
+                        }
+                        if (_a >= _b) {
+                            break;
+                        }
+                        // data[_a] == pivot; data[_b-1] < pivot
+                        Sorts.swap(args, _a, _b - 1);
+                        _a++;
+                        _b--;
+                    }
+                }
+                // Swap pivot into middle
+                Sorts.swap(args, pivot, _b - 1);
+                mlo = _b - 1;
+                mhi = c;
+
+            }
+            // Avoiding recursion on the larger subproblem guarantees
+            // a stack depth of at most lg(b-a).
+            if (mlo - a < b - mhi) {
+                quickSort(args, data, lt, a, mlo, maxDepth);
+                a = mhi; // i.e., quickSort(data, mhi, b)
+            } else {
+                quickSort(args, data, lt, mhi, b, maxDepth);
+                b = mlo; // i.e., quickSort(data, a, mlo)
+            }
+        }
+        if (b - a > 1) {
+            // Do ShellSort pass with gap 6
+            // It could be written in this simplified form cause b-a <= 12
+            for (int i = a + 6; i < b; ++i) {
+                if (lt.test(data, (int) args[i], (int) args[i - 6])) {
+                    Sorts.swap(args, i, i - 6);
+                }
+            }
+            insertionSort(args, data, lt, a, b);
+        }
+    }
+
+    private static void quickSort(double[] args, double[] data, int a, int b, int maxDepth) {
+        while (b - a > 12) { // Use ShellSort for slices <= 12 elements
             if (maxDepth == 0) {
                 heapSort(args, data, a, b);
                 return;
@@ -737,13 +1007,140 @@ public final class IntroSort {
                 int pivot = a;
                 int _a = a + 1, c = b - 1;
 
-                for (; _a < c && data[args[_a]] < data[args[pivot]]; _a++) {
+                while (_a < c && data[(int) args[_a]] < data[(int) args[pivot]]) {
+                    ++_a;
                 }
                 int _b = _a;
-                for (; ; ) {
-                    for (; _b < c && data[args[pivot]] >= data[args[_b]]; _b++) { // data[_b] <= pivot
+                while (true) {
+                    while (_b < c && data[(int) args[pivot]] >= data[(int) args[_b]]) { // data[_b] <= pivot
+                        ++_b;
                     }
-                    for (; _b < c && data[args[pivot]] < data[args[c - 1]]; c--) { // data[c-1] > pivot
+                    while (_b < c && data[(int) args[pivot]] < data[(int) args[c - 1]]) { // data[c-1] > pivot
+                        --c;
+                    }
+                    if (_b >= c) {
+                        break;
+                    }
+                    // data[_b] > pivot; data[c-1] <= pivot
+                    Sorts.swap(args, _b, c - 1);
+                    _b++;
+                    c--;
+                }
+                // If b-c<3 then there are duplicates (by property of median of nine).
+                // Let's be _a bit more conservative, and set border to 5.
+                boolean protect = b - c < 5;
+                if (!protect && b - c < (b - a) / 4) {
+                    // Lets test some points for equality to pivot
+                    int dups = 0;
+                    if (data[(int) args[pivot]] >= data[(int) args[_b - 1]]) { // data[b-1] = pivot
+                        Sorts.swap(args, c, b - 1);
+                        c++;
+                        dups++;
+                    }
+                    if (data[(int) args[_b - 1]] >= data[(int) args[pivot]]) { // data[_b-1] = pivot
+                        _b--;
+                        dups++;
+                    }
+                    // m-a = (b-a)/2 > 6
+                    // _b-a > (b-a)*3/4-1 > 8
+                    // ==> m < _b ==> data[m] <= pivot
+                    if (data[(int) args[m]] >= data[(int) args[pivot]]) { // data[m] = pivot
+                        Sorts.swap(args, m, _b - 1);
+                        _b--;
+                        dups++;
+                    }
+                    // if at least 2 points are equal to pivot, assume skewed distribution
+                    protect = dups > 1;
+                }
+                if (protect) {
+                    // Protect against _a lot of duplicates
+                    // Add invariant:
+                    //	data[_a <= i < _b] unexamined
+                    //	data[_b <= i < c] = pivot
+                    while (true) {
+                        while (_a < _b && data[(int) args[_b - 1]] >= data[(int) args[pivot]]) { // data[_b] == pivot
+                            --_b;
+                        }
+                        while (_a < _b && data[(int) args[_a]] < data[(int) args[pivot]]) { // data[_a] < pivot
+                            ++_a;
+                        }
+                        if (_a >= _b) {
+                            break;
+                        }
+                        // data[_a] == pivot; data[_b-1] < pivot
+                        Sorts.swap(args, _a, _b - 1);
+                        _a++;
+                        _b--;
+                    }
+                }
+                // Swap pivot into middle
+                Sorts.swap(args, pivot, _b - 1);
+                mlo = _b - 1;
+                mhi = c;
+
+            }
+            // Avoiding recursion on the larger subproblem guarantees
+            // a stack depth of at most lg(b-a).
+            if (mlo - a < b - mhi) {
+                quickSort(args, data, a, mlo, maxDepth);
+                a = mhi; // i.e., quickSort(data, mhi, b)
+            } else {
+                quickSort(args, data, mhi, b, maxDepth);
+                b = mlo; // i.e., quickSort(data, a, mlo)
+            }
+        }
+        if (b - a > 1) {
+            // Do ShellSort pass with gap 6
+            // It could be written in this simplified form cause b-a <= 12
+            for (int i = a + 6; i < b; ++i) {
+                if (data[(int) args[i]] < data[(int) args[i - 6]]) {
+                    Sorts.swap(args, i, i - 6);
+                }
+            }
+            insertionSort(args, data, a, b);
+        }
+    }
+
+    private static void quickSort(int[] args, double[] data, int a, int b, int maxDepth) {
+        while (b - a > 12) { // Use ShellSort for slices <= 12 elements
+            if (maxDepth == 0) {
+                heapSort(args, data, a, b);
+                return;
+            }
+            maxDepth--;
+            int mlo, mhi;
+            //doPivot
+            {
+                int m = ((a + b) >> 1);
+                if (b - a > 40) {
+                    // Tukey's ``Ninther,'' median of three medians of three.
+                    int s = (b - a) / 8;
+                    medianOfThree(args, data, a, a + s, a + 2 * s);
+                    medianOfThree(args, data, m, m - s, m + s);
+                    medianOfThree(args, data, b - 1, b - 1 - s, b - 1 - 2 * s);
+                }
+                medianOfThree(args, data, a, m, b - 1);
+
+                // Invariants are:
+                //	data[a] = pivot (set up by ChoosePivot)
+                //	data[a < i < _a] < pivot
+                //	data[_a <= i < _b] <= pivot
+                //	data[_b <= i < c] unexamined
+                //	data[c <= i < b-1] > pivot
+                //	data[b-1] >= pivot
+                int pivot = a;
+                int _a = a + 1, c = b - 1;
+
+                while (_a < c && data[args[_a]] < data[args[pivot]]) {
+                    ++_a;
+                }
+                int _b = _a;
+                while (true) {
+                    while (_b < c && data[args[pivot]] >= data[args[_b]]) { // data[_b] <= pivot
+                        ++_b;
+                    }
+                    while (_b < c && data[args[pivot]] < data[args[c - 1]]) { // data[c-1] > pivot
+                        --c;
                     }
                     if (_b >= c) {
                         break;
@@ -784,10 +1181,12 @@ public final class IntroSort {
                     // Add invariant:
                     //	data[_a <= i < _b] unexamined
                     //	data[_b <= i < c] = pivot
-                    for (; ; ) {
-                        for (; _a < _b && data[args[_b - 1]] >= data[args[pivot]]; _b--) { // data[_b] == pivot
+                    while (true) {
+                        while (_a < _b && data[args[_b - 1]] >= data[args[pivot]]) { // data[_b] == pivot
+                            --_b;
                         }
-                        for (; _a < _b && data[args[_a]] < data[args[pivot]]; _a++) { // data[_a] < pivot
+                        while (_a < _b && data[args[_a]] < data[args[pivot]]) { // data[_a] < pivot
+                            ++_a;
                         }
                         if (_a >= _b) {
                             break;

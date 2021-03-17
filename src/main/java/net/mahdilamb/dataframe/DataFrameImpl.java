@@ -43,7 +43,7 @@ abstract class DataFrameImpl implements DataFrame {
     /**
      * The maximum width of a row when printing
      */
-    static final int MAX_WIDTH = 12;
+    static final int MAX_WIDTH = 16;
     /**
      * The string used to separate columns
      */

@@ -3,7 +3,7 @@ package net.mahdilamb.stats.distributions;
 /**
  * An alpha distribution
  */
-public final class AlphaDistribution implements Distribution {
+public final class AlphaDistribution implements ContinuousDistribution {
     /**
      * The alpha value of this distribution
      */

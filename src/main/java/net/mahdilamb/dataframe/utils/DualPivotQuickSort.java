@@ -69,13 +69,12 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the array of data
      * @param <T>  the type of the data.
      * @return the args, sorted using the data
      */
-    public static <T extends Comparable<T>> int[] argSort(int[] args, int size, T[] arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1, Comparator.naturalOrder());
+    public static <T extends Comparable<T>> int[] argSort(int[] args, T[] arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1, Comparator.naturalOrder());
         return args;
     }
 
@@ -83,12 +82,11 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the array of data
      * @return the args, sorted using the data
      */
-    public static int[] argSort(int[] args, int size, long[] arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1);
+    public static int[] argSort(int[] args, long[] arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1);
         return args;
     }
 
@@ -96,12 +94,11 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the array of data
      * @return the args, sorted using the data
      */
-    public static int[] argSort(int[] args, int size, double[] arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1);
+    public static int[] argSort(int[] args, double[] arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1);
         return args;
     }
 
@@ -109,12 +106,11 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the data getter
      * @return the args, sorted using the data
      */
-    public static int[] argSort(int[] args, int size, IntToDoubleFunction arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1);
+    public static int[] argSort(int[] args, IntToDoubleFunction arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1);
         return args;
     }
 
@@ -122,12 +118,11 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the data getter
      * @return the args, sorted using the data
      */
-    public static int[] argSort(int[] args, int size, IntToLongFunction arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1);
+    public static int[] argSort(int[] args, IntToLongFunction arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1);
         return args;
     }
 
@@ -135,12 +130,11 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the data getter
      * @return the args, sorted using the data
      */
-    public static int[] argSort(int[] args, int size, IntPredicate arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1);
+    public static int[] argSort(int[] args, IntPredicate arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1);
         return args;
     }
 
@@ -148,12 +142,11 @@ public final class DualPivotQuickSort {
      * Get the indices that would sort the array. The data array is not sorted but the args are
      *
      * @param args the indices used for sort
-     * @param size the size of elements to sort
      * @param arr  the array of data
      * @return the args, sorted using the data
      */
-    public static int[] argSort(int[] args, int size, boolean[] arr) {
-        dualPivotQuickSort(args, arr, 0, size - 1);
+    public static int[] argSort(int[] args, boolean[] arr) {
+        dualPivotQuickSort(args, arr, 0, args.length - 1);
         return args;
     }
 
@@ -167,69 +160,69 @@ public final class DualPivotQuickSort {
         return args;
     }
 
-    public static <T extends Comparable<T>> int[] argSort(int[] args, int size, T[] arr, boolean ascending) {
-        return argSort(args, size, arr, ascending, Comparator.naturalOrder());
+    public static <T extends Comparable<T>> int[] argSort(int[] args, T[] arr, boolean ascending) {
+        return argSort(args, arr, ascending, Comparator.naturalOrder());
     }
 
-    public static int[] argSort(int[] args, int size, double[] arr, boolean ascending) {
+    public static int[] argSort(int[] args, double[] arr, boolean ascending) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1);
+            dualPivotQuickSort(args, arr, 0, args.length - 1);
         } else {
-            dualPivotQuickSortReversed(args, arr, 0, size - 1);
+            dualPivotQuickSortReversed(args, arr, 0, args.length - 1);
         }
         return args;
     }
 
-    public static int[] argSort(int[] args, int size, long[] arr, boolean ascending) {
+    public static int[] argSort(int[] args, long[] arr, boolean ascending) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1);
+            dualPivotQuickSort(args, arr, 0, args.length - 1);
         } else {
-            dualPivotQuickSortReversed(args, arr, 0, size - 1);
+            dualPivotQuickSortReversed(args, arr, 0, args.length - 1);
         }
         return args;
     }
 
-    public static int[] argSort(int[] args, int size, IntToDoubleFunction arr, boolean ascending) {
+    public static int[] argSort(int[] args, IntToDoubleFunction arr, boolean ascending) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1);
+            dualPivotQuickSort(args, arr, 0, args.length - 1);
         } else {
-            dualPivotQuickSortReversed(args, arr, 0, size - 1);
+            dualPivotQuickSortReversed(args, arr, 0, args.length - 1);
         }
         return args;
     }
 
-    public static int[] argSort(int[] args, int size, IntToLongFunction arr, boolean ascending) {
+    public static int[] argSort(int[] args, IntToLongFunction arr, boolean ascending) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1);
+            dualPivotQuickSort(args, arr, 0, args.length - 1);
         } else {
-            dualPivotQuickSortReversed(args, arr, 0, size - 1);
+            dualPivotQuickSortReversed(args, arr, 0, args.length - 1);
         }
         return args;
     }
 
-    public static int[] argSort(int[] args, int size, IntPredicate arr, boolean ascending) {
+    public static int[] argSort(int[] args, IntPredicate arr, boolean ascending) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1);
+            dualPivotQuickSort(args, arr, 0, args.length - 1);
         } else {
-            dualPivotQuickSortReversed(args, arr, 0, size - 1);
+            dualPivotQuickSortReversed(args, arr, 0, args.length - 1);
         }
         return args;
     }
 
-    public static int[] argSort(int[] args, int size, boolean[] arr, boolean ascending) {
+    public static int[] argSort(int[] args, boolean[] arr, boolean ascending) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1);
+            dualPivotQuickSort(args, arr, 0, args.length - 1);
         } else {
-            dualPivotQuickSortReversed(args, arr, 0, size - 1);
+            dualPivotQuickSortReversed(args, arr, 0, args.length - 1);
         }
         return args;
     }
 
-    public static <T> int[] argSort(int[] args, int size, T[] arr, boolean ascending, Comparator<T> cmp) {
+    public static <T> int[] argSort(int[] args, T[] arr, boolean ascending, Comparator<T> cmp) {
         if (ascending) {
-            dualPivotQuickSort(args, arr, 0, size - 1, cmp);
+            dualPivotQuickSort(args, arr, 0, args.length - 1, cmp);
         } else {
-            dualPivotQuickSort(args, arr, 0, size - 1, cmp.reversed());
+            dualPivotQuickSort(args, arr, 0, args.length - 1, cmp.reversed());
         }
         return args;
     }
