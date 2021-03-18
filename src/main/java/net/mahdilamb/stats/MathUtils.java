@@ -152,6 +152,17 @@ public final strictfp class MathUtils {
     }
 
     /**
+     * Calculate the dot product of two 2D vectors
+     * @param ax the x component of a
+     * @param ay the y component of a
+     * @param bx the x component of b
+     * @param by the y component of b
+     * @return the dot product of a and b
+     */
+    public static double dot(double ax, double ay, double bx, double by) {
+        return ax * bx + ay * by;
+    }
+    /**
      * Calculate the dot product between two same sized vectors
      *
      * @param lhs the left-handside vector

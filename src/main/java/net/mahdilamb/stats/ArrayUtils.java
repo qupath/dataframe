@@ -562,7 +562,6 @@ public final strictfp class ArrayUtils {
         for (int i = 0; i < num; ++i) {
             out[i] = Math.fma(i, step, start);
         }
-
         return out;
     }
 

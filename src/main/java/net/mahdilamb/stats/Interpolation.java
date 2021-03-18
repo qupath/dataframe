@@ -44,4 +44,29 @@ public strictfp enum Interpolation {
     double interpolate(final double fraction, final double low, final double high) {
         return interpolator.applyAsDouble(fraction, low, high);
     }
+
+    /**
+     * @param interpolation the name of the interpolation method
+     * @return an Interpolation method from its name
+     */
+    public static Interpolation getInterpolation(final String interpolation) {
+        switch (interpolation.toLowerCase()) {
+            case "linear":
+                return LINEAR;
+            case "lower":
+            case "floor":
+                return LOWER;
+            case "higher":
+            case "ceil":
+                return HIGHER;
+            case "nearest":
+            case "round":
+                return NEAREST;
+            case "midpoint":
+            case "average":
+                return MIDPOINT;
+            default:
+                throw new UnsupportedOperationException("No interpolation method called " + interpolation);
+        }
+    }
 }
