@@ -394,6 +394,12 @@ public final class Cephes {
     public static double jv(double v, double x) throws DomainException, OverflowException, LossException, UnderflowException {
         return CephesImpl.jv_c.jv(v, x);
     }
-
+    /**
+     * @param x the value to find the gamma ln of
+     * @return the logarithm of the absolute value of the gamma function
+     */
+    public static double gammaLN(double x) {
+        return Math.log(Math.abs(Gamma(x)));
+    }
 
 }

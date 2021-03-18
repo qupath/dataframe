@@ -28,7 +28,7 @@ public final class NormalDistributions {
      * @param x the value
      * @return the PDF
      */
-    public static double calculatePDF(double x) {
+    public static double PDF(double x) {
         return Math.exp(-(x * x) * .5) / PDF_C;
     }
 
@@ -39,7 +39,7 @@ public final class NormalDistributions {
      * @param x the value
      * @return the log PDF
      */
-    public static double calculateLogPDF(double x) {
+    public static double logPDF(double x) {
         return (-(x * x) * .5) - PDF_LOG_C;
     }
 
@@ -51,7 +51,7 @@ public final class NormalDistributions {
      * @param x the value
      * @return the log CDF
      */
-    public static double calculateLogCDF(double x) {
+    public static double logCDF(double x) {
         return log_ndtr(x);
     }
 
@@ -63,8 +63,8 @@ public final class NormalDistributions {
      * @param stddev the standard deviation of the distribution of interest
      * @return the log CDF
      */
-    public static double calculateLogCDF(double x, double mean, double stddev) {
-        return calculateLogCDF(standardize(x, mean, stddev));
+    public static double logCDF(double x, double mean, double stddev) {
+        return logCDF(standardize(x, mean, stddev));
     }
 
     /**
@@ -76,8 +76,8 @@ public final class NormalDistributions {
      * @param stddev the standard deviation of the distribution of interest
      * @return the PDF
      */
-    public static double calculatePDF(double x, double mean, double stddev) {
-        return calculatePDF(standardize(x, mean, stddev)) / stddev;
+    public static double PDF(double x, double mean, double stddev) {
+        return PDF(standardize(x, mean, stddev)) / stddev;
     }
 
     /**
@@ -88,8 +88,8 @@ public final class NormalDistributions {
      * @param stdev the standard deviation of the distribution of interest
      * @return the log PDF
      */
-    public static double calculateLogPDF(double x, double mean, double stdev) {
-        return calculateLogPDF(standardize(x, mean, stdev)) - Math.log(stdev);
+    public static double logPDF(double x, double mean, double stdev) {
+        return logPDF(standardize(x, mean, stdev)) - Math.log(stdev);
     }
 
     /**
@@ -99,7 +99,7 @@ public final class NormalDistributions {
      * @param x the value to calculate the CDF of
      * @return the CDF
      */
-    public static double calculateCDF(double x) {
+    public static double CDF(double x) {
         return ndtr(x);
     }
 
@@ -111,8 +111,8 @@ public final class NormalDistributions {
      * @param stdev the standard deviation of the distribution of interest
      * @return the CDF
      */
-    public static double calculateCDF(double x, double mean, double stdev) {
-        return calculateCDF(standardize(x, mean, stdev));
+    public static double CDF(double x, double mean, double stdev) {
+        return CDF(standardize(x, mean, stdev));
     }
 
     /**
@@ -122,7 +122,7 @@ public final class NormalDistributions {
      * @param x the value to calculate the PPF of
      * @return the PPF
      */
-    public static double calculatePPF(double x) {
+    public static double PPF(double x) {
         return ndtri(x);
     }
 
@@ -134,8 +134,8 @@ public final class NormalDistributions {
      * @param stdev the standard deviation of the distribution of interest
      * @return the PPF
      */
-    public static double calculatePPF(double x, double mean, double stdev) {
-        return calculatePPF(standardize(x, mean, stdev));
+    public static double PPF(double x, double mean, double stdev) {
+        return PPF(standardize(x, mean, stdev));
     }
 
     /**
@@ -144,8 +144,8 @@ public final class NormalDistributions {
      * @param x the value
      * @return the SF
      */
-    public static double calculateSF(double x) {
-        return calculateCDF(-x);
+    public static double SF(double x) {
+        return CDF(-x);
     }
 
     /**
@@ -156,8 +156,8 @@ public final class NormalDistributions {
      * @param stdev the standard deviation of the distribution of interest
      * @return the SF
      */
-    public static double calculateSF(double x, double mean, double stdev) {
-        return calculateSF(standardize(x, mean, stdev));
+    public static double SF(double x, double mean, double stdev) {
+        return SF(standardize(x, mean, stdev));
     }
 
     /**
@@ -166,8 +166,8 @@ public final class NormalDistributions {
      * @param x the value
      * @return the inverse SF
      */
-    public static double calculateInverseSF(double x) {
-        return -calculatePPF(x);
+    public static double inverseSF(double x) {
+        return -PPF(x);
     }
 
     /**
@@ -178,8 +178,8 @@ public final class NormalDistributions {
      * @param stdev the standard deviation of the distribution of interest
      * @return the inverse SF
      */
-    public static double calculateInverseSF(double x, double mean, double stdev) {
-        return calculateInverseSF(standardize(x, mean, stdev));
+    public static double inverseSF(double x, double mean, double stdev) {
+        return inverseSF(standardize(x, mean, stdev));
     }
 
     /**
@@ -188,8 +188,8 @@ public final class NormalDistributions {
      * @param x the value
      * @return the log SF
      */
-    public static double calculateLogSF(double x) {
-        return calculateLogCDF(-x);
+    public static double logSF(double x) {
+        return logCDF(-x);
     }
 
     /**
@@ -200,8 +200,8 @@ public final class NormalDistributions {
      * @param stdev the standard deviation of the distribution of interest
      * @return the log SF
      */
-    public static double calculateLogSF(double x, double mean, double stdev) {
-        return calculateLogSF(standardize(x, mean, stdev));
+    public static double logSF(double x, double mean, double stdev) {
+        return logSF(standardize(x, mean, stdev));
     }
 
     /**

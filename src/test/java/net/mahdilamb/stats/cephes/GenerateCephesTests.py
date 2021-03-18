@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import os
 from scipy import special
-from typing import NamedTuple
+from typing import NamedTuple, Callable
 
 output = "net.mahdilamb.statistics.cephes.JUnitTests.java"
 cephes = "net.mahdilamb.statistics.libs.Cephes"
@@ -155,4 +155,4 @@ if __name__ == "__main__":
                                           special.ellipe),
                       TestCaseDoubleUnary("ellipkTest", "ellipk", range_1d,
                                           special.ellipk),
-                  ]).run();
+                  ]).run()

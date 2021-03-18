@@ -497,13 +497,5 @@ public final strictfp class MathUtils {
         return p1 + e1;
     }
 
-    /**
-     * @param x the value to find the gamma ln of
-     * @return the logarithm of the absolute value of the gamma function
-     */
-    public static double gammaLN(double x) {
-        return Math.log(Math.abs(Gamma(x)));
-    }
-
 }
 

@@ -2,7 +2,6 @@ package net.mahdilamb.stats.distributions;
 
 import static net.mahdilamb.stats.StatUtils.count;
 import static net.mahdilamb.stats.StatUtils.mean;
-import static net.mahdilamb.stats.distributions.NormalDistributions.*;
 
 /**
  * Normal distribution
@@ -51,37 +50,37 @@ public final class NormalDistribution implements ContinuousDistribution {
 
     @Override
     public double PDF(double x) {
-        return calculatePDF(x, mean, standardDeviation);
+        return NormalDistributions.PDF(x, mean, standardDeviation);
     }
 
     @Override
     public double logPDF(double x) {
-        return calculateLogPDF(x, mean, standardDeviation);
+        return NormalDistributions.logPDF(x, mean, standardDeviation);
     }
 
     @Override
     public double CDF(double x) {
-        return calculateCDF(x, mean, standardDeviation);
+        return NormalDistributions.CDF(x, mean, standardDeviation);
     }
 
     @Override
     public double logCDF(double x) {
-        return calculateLogCDF(x, mean, standardDeviation);
+        return NormalDistributions.logCDF(x, mean, standardDeviation);
     }
 
     @Override
     public double PPF(double x) {
-        return calculatePPF(x, mean, standardDeviation);
+        return NormalDistributions.PPF(x, mean, standardDeviation);
     }
 
     @Override
     public double SF(double x) {
-        return calculateSF(x, mean, standardDeviation);
+        return NormalDistributions.SF(x, mean, standardDeviation);
     }
 
     @Override
     public double logSF(double x) {
-        return calculateLogSF(x, mean, standardDeviation);
+        return NormalDistributions.logSF(x, mean, standardDeviation);
     }
 
 

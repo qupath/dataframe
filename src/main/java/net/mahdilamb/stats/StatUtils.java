@@ -10,6 +10,7 @@ import net.mahdilamb.utils.tuples.NamedDoubleTuple;
 import net.mahdilamb.utils.tuples.Tuple;
 
 import java.util.Arrays;
+import java.util.function.DoubleUnaryOperator;
 import java.util.function.IntToDoubleFunction;
 
 import static java.lang.Math.abs;
@@ -27,8 +28,6 @@ import static net.mahdilamb.stats.ArrayUtils.intRange;
  *  </pre>
  *
  * </li>
- * <li>#method(double... data). For primitive double arrays</li>
- * <li>#method(int... data). For primitive int arrays</li>
  * </ul>
  * <p>
  * They should output to a value of the highest precision (double or long).
@@ -83,6 +82,21 @@ public strictfp final class StatUtils {
     }
 
     /**
+     * Calculate the product of the data using a functional operator.
+     *
+     * @param getter the lambda that gets and element at an index
+     * @param size   the number of elements to product
+     * @return the product of the data
+     */
+    public static double product(IntToDoubleFunction getter, int size) {
+        double accum = getter.applyAsDouble(0);
+        for (int i = 1; i < size; ++i) {
+            accum *= getter.applyAsDouble(i);
+        }
+        return accum;
+    }
+
+    /**
      * Calculate the mean of the data using a functional operator.
      *
      * @param getter the lambda that gets and element at an index
@@ -121,7 +135,6 @@ public strictfp final class StatUtils {
      */
     public static double max(IntToDoubleFunction getter, int size) {
         double max = getter.applyAsDouble(0);
-
         for (int i = 1; i < size; ++i) {
             max = Math.max(max, getter.applyAsDouble(i));
         }
@@ -154,13 +167,7 @@ public strictfp final class StatUtils {
      * @return the variance of the data
      */
     public static double variance(IntToDoubleFunction getter, int size) {
-        final double mean = mean(getter, size);
-        double sumMeanDiffSq = 0d;
-        for (int i = 0; i < size; ++i) {
-            final double meanDiff = getter.applyAsDouble(i) - mean;
-            sumMeanDiffSq += (meanDiff * meanDiff) / size;
-        }
-        return sumMeanDiffSq;
+        return variance(getter, size, 0);
     }
 
     public static double variance(IntToDoubleFunction getter, int size, int ddof) {
@@ -189,22 +196,6 @@ public strictfp final class StatUtils {
         return Math.sqrt(variance(getter, size));
     }
 
-
-    /**
-     * Calculate the sum of the data
-     *
-     * @param first the first in the series of the data
-     * @param data  the data from which to calculate the sum
-     * @return the sum of the data
-     */
-    public static double sum(final double first, final double... data) {
-        double accum = first;
-        for (final double d : data) {
-            accum += d;
-        }
-        return accum;
-    }
-
     /**
      * Calculate the sum of the data
      *
@@ -215,21 +206,6 @@ public strictfp final class StatUtils {
         double accum = 0;
         for (final double d : data) {
             accum += d;
-        }
-        return accum;
-    }
-
-    /**
-     * Calculate the product of the data
-     *
-     * @param first the first in the series of the data
-     * @param data  the data from which to calculate the sum
-     * @return the product of the data
-     */
-    public static double product(final double first, final double... data) {
-        double accum = first;
-        for (final double d : data) {
-            accum *= d;
         }
         return accum;
     }
@@ -343,17 +319,13 @@ public strictfp final class StatUtils {
      * @return the minimum of the data
      */
     public static double NaNMin(final double... data) {
-        Double min = null;
-        for (final double d : data) {
+        double min = data[0];
+        for (int i = 1; i < data.length; ++i) {
+            final double d = data[i];
             if (Double.isNaN(d)) {
                 continue;
             }
-            if (min == null || d < min) {
-                min = d;
-            }
-        }
-        if (min == null) {
-            throw InsufficientDataException.createForArray();
+            min = Math.min(min, d);
         }
         return min;
     }
@@ -365,17 +337,13 @@ public strictfp final class StatUtils {
      * @return the maximum of the data
      */
     public static double NaNMax(final double... data) {
-        Double max = null;
-        for (final double d : data) {
+        double max = data[0];
+        for (int i = 1; i < data.length; ++i) {
+            final double d = data[i];
             if (Double.isNaN(d)) {
                 continue;
             }
-            if (max == null || d > max) {
-                max = d;
-            }
-        }
-        if (max == null) {
-            throw InsufficientDataException.createForArray();
+            max = Math.max(max, d);
         }
         return max;
     }
@@ -941,8 +909,7 @@ public strictfp final class StatUtils {
         if (quantile <= 0 || quantile >= 1) {
             if (quantile == 0) {
                 return data[0];
-            }
-            if (quantile == 1) {
+            } else if (quantile == 1) {
                 return data[data.length - 1];
             }
             throw new IllegalArgumentException("Quantile must be in range 0-1");
@@ -1007,8 +974,7 @@ public strictfp final class StatUtils {
                 if (percentile == 0) {
                     out[i++] = data[0];
                     continue;
-                }
-                if (percentile == 100) {
+                } else if (percentile == 100) {
                     out[i++] = data[data.length - 1];
                     continue;
                 }
@@ -1037,8 +1003,7 @@ public strictfp final class StatUtils {
         if (percentile <= 0 || percentile >= 100) {
             if (percentile == 0) {
                 return data[0];
-            }
-            if (percentile == 100) {
+            } else if (percentile == 100) {
                 return data[data.length - 1];
             }
             throw new IllegalArgumentException("percentile must be in range 0-100");
@@ -1561,9 +1526,8 @@ public strictfp final class StatUtils {
         y = y == 0 ? 1 : y;
 
         double Z = delta * Math.log(y / alpha + Math.sqrt(Math.pow(y / alpha, 2) + 1));
-        return Tuple.namedTuple("statistic", Z, P_VALUE, 2 * NormalDistributions.calculateSF(Math.abs(Z)));
+        return Tuple.namedTuple("statistic", Z, P_VALUE, 2 * NormalDistributions.SF(Math.abs(Z)));
     }
-
 
     private static final double PRECISION_THRESHOLD = 1e-13;
 
@@ -1671,105 +1635,6 @@ public strictfp final class StatUtils {
         return Tuple.namedTuple("coeff", r, P_VALUE, prob);
     }
 
-    private static double[] rankDataOrdinal(int size, int[] order) {
-        final double[] ranks = new double[size];
-        for (int i = 0; i < order.length; ++i) {
-            ranks[order[i]] = i;
-        }
-        for (int i = 0; i < order.length; ++i) {
-            ranks[i] = ranks[i] + 1;
-        }
-        return ranks;
-    }
-
-    private static double[] rankDataAverage(IntToDoubleFunction getter, int size, int[] order) {
-        final double[] rank = new double[size];
-        int j = 0;
-        while (j < size) {
-            int start = j;
-            double prev = getter.applyAsDouble(order[start]);
-            ++j;
-            while (j < size) {
-                double current = getter.applyAsDouble(order[j]);
-                if (current != prev) {
-                    break;
-                }
-                ++j;
-            }
-            for (int i = start; i < j; ++i) {
-                rank[order[i]] = (j + start + 1) * .5;
-            }
-        }
-        return rank;
-    }
-
-    private static double[] rankDataDense(IntToDoubleFunction getter, int size, int[] order) {
-        final double[] rank = new double[size];
-        int k = 0;
-        int j = 0;
-        while (j < size) {
-            int start = j;
-            double prev = getter.applyAsDouble(order[start]);
-            ++j;
-            while (j < size) {
-                double current = getter.applyAsDouble(order[j]);
-                if (current != prev) {
-                    break;
-                }
-                ++j;
-            }
-            ++k;
-            for (int i = start; i < j; ++i) {
-                rank[order[i]] = k;
-            }
-        }
-        return rank;
-    }
-
-    private static double[] rankDataMin(IntToDoubleFunction getter, int size, int[] order) {
-        final double[] rank = new double[size];
-        int j = 0;
-        while (j < size) {
-            int start = j;
-            double prev = getter.applyAsDouble(order[start]);
-            ++j;
-            while (j < size) {
-                double current = getter.applyAsDouble(order[j]);
-                if (current != prev) {
-                    break;
-                }
-                ++j;
-            }
-            for (int i = start; i < j; ++i) {
-                rank[order[i]] = start + 1;
-            }
-
-        }
-        return rank;
-    }
-
-    private static double[] rankDataMax(IntToDoubleFunction getter, int size, int[] order) {
-        final double[] rank = new double[size];
-        int j = 0;
-        while (j < size) {
-            int start = j;
-            double prev = getter.applyAsDouble(order[start]);
-            ++j;
-            while (j < size) {
-                double current = getter.applyAsDouble(order[j]);
-                if (current != prev) {
-                    break;
-                }
-                ++j;
-            }
-            for (int i = start; i < j; ++i) {
-                rank[order[i]] = j;
-            }
-
-        }
-        return rank;
-    }
-
     /**
      * Assign ranks to data
      *
@@ -1780,57 +1645,123 @@ public strictfp final class StatUtils {
      */
     public static double[] rankData(IntToDoubleFunction getter, int size, RankMethod method) {
         final int[] order = ArrayUtils.intRange(size);
+        final double[] ranks = new double[size];
+
         if (method == RankMethod.ORDINAL) {
             MergeSort.argSort(order, getter);
+            for (int i = 0; i < order.length; ++i) {
+                ranks[order[i]] = i + 1;
+            }
         } else {
             DualPivotQuickSort.argSort(order, getter, true);
+            int k = 0;
+            int j = 0;
+            //find runs in the sorted data
+            while (j < size) {
+                int start = j;
+                double prev = getter.applyAsDouble(order[start]);
+                ++j;
+                while (j < size) {
+                    double current = getter.applyAsDouble(order[j]);
+                    if (current != prev) {
+                        break;
+                    }
+                    ++j;
+                }
+                ++k;
+                //use the appropriate method to deal with ties
+                for (int i = start; i < j; ++i) {
+                    ranks[order[i]] = method.ranker.computeRank(k, start, j);
+                }
+            }
         }
-        switch (method) {
-            case ORDINAL:
-                return rankDataOrdinal(size, order);
-            case AVERAGE:
-                return rankDataAverage(getter, size, order);
-            case DENSE:
-                return rankDataDense(getter, size, order);
-            case MIN:
-                return rankDataMin(getter, size, order);
-            case MAX:
-                return rankDataMax(getter, size, order);
-            default:
-                throw new UnsupportedOperationException();
-
-        }
-
+        return ranks;
     }
 
+    /**
+     * Get the ranks of the data using the average position to deal with ties
+     *
+     * @param getter the index to value getter
+     * @param size   the size of the data source
+     * @param method the name of the method used to deal with ties (i.e. "ordinal", "min", "max", "dense", "average")
+     * @return the data ranks
+     */
+    public static double[] rankData(IntToDoubleFunction getter, int size, String method) {
+        return rankData(getter, size, RankMethod.getRankMethod(method));
+    }
+
+    /**
+     * Get the ranks of the data using the average position to deal with ties
+     *
+     * @param getter the index to value getter
+     * @param size   the size of the data source
+     * @return the data ranks
+     */
     public static double[] rankData(IntToDoubleFunction getter, int size) {
         return rankData(getter, size, RankMethod.AVERAGE);
     }
 
+    /**
+     * Calculate the Pearson product-moment correlation coefficient
+     *
+     * @param x the x values
+     * @param y the y values
+     * @return the Pearson product-moment correlation coefficient
+     */
     public static double correlationCoefficient(double[] x, double[] y) {
         double meanX = mean(x);
         double meanY = mean(y);
         double xm_ym = 0;
         double xm_xm = 0;
         double ym_ym = 0;
-        for (int idx = 0; idx < x.length; ++idx) {
-            double xm = x[idx] - meanX;
-            double ym = y[idx] - meanY;
+        for (int i = 0; i < x.length; ++i) {
+            double xm = x[i] - meanX;
+            double ym = y[i] - meanY;
             xm_ym += xm * ym;
             xm_xm += xm * xm;
             ym_ym += ym * ym;
         }
-
         return xm_ym / Math.sqrt(xm_xm * ym_ym);
     }
 
+    /**
+     * Calculate the Pearson product-moment correlation coefficient
+     *
+     * @param x    the index-to-x value getter
+     * @param y    the index-to-y value getter
+     * @param size the size of the source of the data
+     * @return the Pearson product-moment correlation coefficient
+     */
+    public static double correlationCoefficient(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+        double meanX = mean(x, size);
+        double meanY = mean(y, size);
+        double xm_ym = 0;
+        double xm_xm = 0;
+        double ym_ym = 0;
+        for (int i = 0; i < size; ++i) {
+            double xm = x.applyAsDouble(i) - meanX;
+            double ym = y.applyAsDouble(i) - meanY;
+            xm_ym += xm * ym;
+            xm_xm += xm * xm;
+            ym_ym += ym * ym;
+        }
+        return xm_ym / Math.sqrt(xm_xm * ym_ym);
+    }
 
+    /**
+     * Calculate the Spearman's correlation coefficient of two continuous series of data
+     *
+     * @param x    the index-to-x value getter
+     * @param y    the index-to-y value getter
+     * @param size the size of the source of the data
+     * @return the Spearman's correlation coefficient
+     */
     public static double spearmansCorrelation(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
         if (size <= 1) {
             return Double.NaN;
         }
         if (isConstant(x, size) || isConstant(y, size)) {
-            System.err.println("x or y values are constant");
+            System.err.println("x and/or y values are constant");
             return Double.NaN;
         }
         double[] xRanks = rankData(x, size);
@@ -1839,12 +1770,21 @@ public strictfp final class StatUtils {
         return correlationCoefficient(xRanks, yRanks);
     }
 
+    /**
+     * Calculate the Spearman's correlation coefficient of two continuous series of data
+     *
+     * @param x    the index-to-x value getter
+     * @param y    the index-to-y value getter
+     * @param size the size of the source of the data
+     * @return a named double tuple containing the correlation coefficient ("coeff") and the p-value ("p-value")
+     * comparing the correlation to a Student's t-distribution
+     */
     public static NamedDoubleTuple spearmansCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
         if (size <= 1) {
             return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
         }
         if (isConstant(x, size) || isConstant(y, size)) {
-            System.err.println("x or y values are constant");
+            System.err.println("x and/or y values are constant");
             return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
         }
         double[] xRanks = rankData(x, size);
@@ -1852,5 +1792,79 @@ public strictfp final class StatUtils {
         double c = correlationCoefficient(xRanks, yRanks);
         int dof = size - 2;
         return Tuple.namedTuple("coeff", c, P_VALUE, 2 * TDistributions.SF(Math.abs(c * Math.sqrt(Math.max(0, (dof / ((c + 1.0) * (1.0 - c)))))), dof));
+    }
+
+    /**
+     * Return a linear regression evaluator using the Ordinary Least Squares method
+     *
+     * @param x    the index-to-x values
+     * @param y    the index-to-y values
+     * @param size the size of the source of the values
+     * @return a linear regression evaluator
+     */
+    public static DoubleUnaryOperator linearRegression(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+        double a = 0, b = 0, c = 0, d = 0;
+        for (int n = 0; n < size; n++) {
+            double _x = x.applyAsDouble(n);
+            double _y = y.applyAsDouble(n);
+            a += _x;
+            b += _y;
+            c += _x * _x;
+            d += _x * _y;
+        }
+        final double run = ((size * c) - (a * a));
+        final double rise = ((size * d) - (a * b));
+        final double gradient = run == 0 ? 0 : (rise / run);
+        final double intercept = ((b / size) - ((gradient * a) / size));
+        return xi -> intercept + xi * gradient;
+    }
+
+    /**
+     * Get an x-to-y evaluator over an exponential regression fit to data. Adapted from https://github.com/Tom-Alexander/regression-js/blob/master/src/regression.js
+     *
+     * @param xData the index-to-x data
+     * @param yData the index-to-y data
+     * @param size  the size of the input data
+     * @return an exponential evaluator over x and y
+     */
+    public static DoubleUnaryOperator exponentialRegression(IntToDoubleFunction xData, IntToDoubleFunction yData, int size) {
+        double b = 0, c = 0, d = 0, e = 0, f = 0;
+        for (int n = 0; n < size; n++) {
+            double _x = xData.applyAsDouble(n);
+            double _y = yData.applyAsDouble(n);
+            b += _y;
+            c += _x * _x * _y;
+            d += _y * Math.log(_y);
+            e += _x * _y * Math.log(_y);
+            f += _x * _y;
+        }
+
+        final double denominator = ((b * c) - (f * f));
+        final double A = Math.exp(((c * d) - (f * e)) / denominator);
+        final double B = ((b * e) - (f * d)) / denominator;
+        return x -> A * Math.exp(B * x);
+    }
+    /**
+     * Get an x-to-y evaluator over an power regression fit to data. Adapted from https://github.com/Tom-Alexander/regression-js/blob/master/src/regression.js
+     *
+     * @param xData the index-to-x data
+     * @param yData the index-to-y data
+     * @param size  the size of the input data
+     * @return an power evaluator over x and y
+     */
+    public static DoubleUnaryOperator powerRegression(IntToDoubleFunction xData, IntToDoubleFunction yData, int size) {
+        double sum_0 = 0, sum_1 = 0, sum_2 = 0, sum_3 = 0;
+        for (int n = 0; n < size; n++) {
+            double _x = xData.applyAsDouble(n);
+            double _y = yData.applyAsDouble(n);
+            sum_0 += Math.log(_x);
+            sum_1 += Math.log(_y) * Math.log(_x);
+            sum_2 += Math.log(_y);
+            sum_3 += (Math.pow(Math.log(_x), 2));
+        }
+
+        final double coeffB = ((size * sum_1) - (sum_0 * sum_2)) / ((size * sum_3) - (sum_0 * sum_0));
+        final double coeffA = Math.exp(((sum_2 - (coeffB * sum_0)) / size));
+        return x -> coeffA * Math.pow(x, coeffB);
     }
 }

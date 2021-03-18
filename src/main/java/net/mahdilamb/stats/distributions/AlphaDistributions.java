@@ -21,7 +21,7 @@ public final class AlphaDistributions {
      * @return the probability density function of an alpha distribution
      */
     public static double PDF(double x, double a) {
-        return 1.0 / (x * x) / NormalDistributions.calculateCDF(a) * NormalDistributions.calculatePDF(a - 1.0 / x);
+        return 1.0 / (x * x) / NormalDistributions.CDF(a) * NormalDistributions.PDF(a - 1.0 / x);
     }
 
     /**
@@ -30,7 +30,7 @@ public final class AlphaDistributions {
      * @return the log probability density function of an alpha distribution
      */
     public static double logPDF(double x, double a) {
-        return -2 * Math.log(x) + NormalDistributions.calculateLogPDF(a - 1.0 / x) - Math.log(NormalDistributions.calculateCDF(a));
+        return -2 * Math.log(x) + NormalDistributions.logPDF(a - 1.0 / x) - Math.log(NormalDistributions.CDF(a));
     }
 
     /**
@@ -39,7 +39,7 @@ public final class AlphaDistributions {
      * @return the cumulative density function of an alpha distribution
      */
     public static double CDF(double x, double a) {
-        return NormalDistributions.calculateCDF(a - 1.0 / x) / NormalDistributions.calculateCDF(a);
+        return NormalDistributions.CDF(a - 1.0 / x) / NormalDistributions.CDF(a);
     }
 
     /**
@@ -48,7 +48,7 @@ public final class AlphaDistributions {
      * @return the point probability  function of an alpha distribution
      */
     public static double PPF(double q, double a) {
-        return 1.0 / (a - Cephes.ndtri(q * NormalDistributions.calculateCDF(a)));
+        return 1.0 / (a - Cephes.ndtri(q * NormalDistributions.CDF(a)));
     }
 
 }

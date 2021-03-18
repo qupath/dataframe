@@ -64,45 +64,45 @@ public final class JUnitTests {
     @Test
     public void NormalDistributionTest() {
 
-        assertEquals(0.0044318484119380075, NormalDistributions.calculatePDF(-3), precision);
-        assertEquals(0.05399096651318806, NormalDistributions.calculatePDF(-2), precision);
-        assertEquals(0.24197072451914337, NormalDistributions.calculatePDF(-1), precision);
-        assertEquals(0.3989422804014327, NormalDistributions.calculatePDF(0), precision);
+        assertEquals(0.0044318484119380075, NormalDistributions.PDF(-3), precision);
+        assertEquals(0.05399096651318806, NormalDistributions.PDF(-2), precision);
+        assertEquals(0.24197072451914337, NormalDistributions.PDF(-1), precision);
+        assertEquals(0.3989422804014327, NormalDistributions.PDF(0), precision);
 
-        assertEquals(-5.418938533204672, NormalDistributions.calculateLogPDF(-3), precision);
-        assertEquals(-2.9189385332046727, NormalDistributions.calculateLogPDF(-2), precision);
-        assertEquals(-1.4189385332046727, NormalDistributions.calculateLogPDF(-1), precision);
-        assertEquals(-0.9189385332046727, NormalDistributions.calculateLogPDF(0), precision);
+        assertEquals(-5.418938533204672, NormalDistributions.logPDF(-3), precision);
+        assertEquals(-2.9189385332046727, NormalDistributions.logPDF(-2), precision);
+        assertEquals(-1.4189385332046727, NormalDistributions.logPDF(-1), precision);
+        assertEquals(-0.9189385332046727, NormalDistributions.logPDF(0), precision);
 
-        assertEquals(0.0013498980316300957, NormalDistributions.calculateCDF(-3), precision);
-        assertEquals(0.022750131948179195, NormalDistributions.calculateCDF(-2), precision);
-        assertEquals(0.15865525393145707, NormalDistributions.calculateCDF(-1), precision);
-        assertEquals(0.5, NormalDistributions.calculateCDF(0), precision);
+        assertEquals(0.0013498980316300957, NormalDistributions.CDF(-3), precision);
+        assertEquals(0.022750131948179195, NormalDistributions.CDF(-2), precision);
+        assertEquals(0.15865525393145707, NormalDistributions.CDF(-1), precision);
+        assertEquals(0.5, NormalDistributions.CDF(0), precision);
 
-        assertEquals(-6.60772622151035, NormalDistributions.calculateLogCDF(-3), precision);
-        assertEquals(-3.7831843336820326, NormalDistributions.calculateLogCDF(-2), precision);
-        assertEquals(-1.8410216450092634, NormalDistributions.calculateLogCDF(-1), precision);
-        assertEquals(-0.6931471805599453, NormalDistributions.calculateLogCDF(0), precision);
+        assertEquals(-6.60772622151035, NormalDistributions.logCDF(-3), precision);
+        assertEquals(-3.7831843336820326, NormalDistributions.logCDF(-2), precision);
+        assertEquals(-1.8410216450092634, NormalDistributions.logCDF(-1), precision);
+        assertEquals(-0.6931471805599453, NormalDistributions.logCDF(0), precision);
 
-        assertEquals(0.9986501019683699, NormalDistributions.calculateSF(-3), precision);
-        assertEquals(0.9772498680518208, NormalDistributions.calculateSF(-2), precision);
-        assertEquals(0.8413447460685429, NormalDistributions.calculateSF(-1), precision);
-        assertEquals(0.5, NormalDistributions.calculateSF(0), precision);
+        assertEquals(0.9986501019683699, NormalDistributions.SF(-3), precision);
+        assertEquals(0.9772498680518208, NormalDistributions.SF(-2), precision);
+        assertEquals(0.8413447460685429, NormalDistributions.SF(-1), precision);
+        assertEquals(0.5, NormalDistributions.SF(0), precision);
 
-        assertEquals(-0.0013508099647482027, NormalDistributions.calculateLogSF(-3), precision);
-        assertEquals(-0.02301290932896349, NormalDistributions.calculateLogSF(-2), precision);
-        assertEquals(-0.1727537790234499, NormalDistributions.calculateLogSF(-1), precision);
-        assertEquals(-0.6931471805599453, NormalDistributions.calculateLogSF(0), precision);
+        assertEquals(-0.0013508099647482027, NormalDistributions.logSF(-3), precision);
+        assertEquals(-0.02301290932896349, NormalDistributions.logSF(-2), precision);
+        assertEquals(-0.1727537790234499, NormalDistributions.logSF(-1), precision);
+        assertEquals(-0.6931471805599453, NormalDistributions.logSF(0), precision);
 
-        assertEquals(-1.1503493803760079, NormalDistributions.calculatePPF(.125), precision);
-        assertEquals(0, NormalDistributions.calculatePPF(.5), precision);
-        assertEquals(Double.POSITIVE_INFINITY, NormalDistributions.calculatePPF(1), precision);
-        assertEquals(1.1503493803760079, NormalDistributions.calculatePPF(0.875), precision);
+        assertEquals(-1.1503493803760079, NormalDistributions.PPF(.125), precision);
+        assertEquals(0, NormalDistributions.PPF(.5), precision);
+        assertEquals(Double.POSITIVE_INFINITY, NormalDistributions.PPF(1), precision);
+        assertEquals(1.1503493803760079, NormalDistributions.PPF(0.875), precision);
 
-        assertEquals(1.1503493803760079, NormalDistributions.calculateInverseSF(.125), precision);
-        assertEquals(0, NormalDistributions.calculateInverseSF(.5), precision);
-        assertEquals(Double.NEGATIVE_INFINITY, NormalDistributions.calculateInverseSF(1), precision);
-        assertEquals(-1.1503493803760079, NormalDistributions.calculateInverseSF(0.875), precision);
+        assertEquals(1.1503493803760079, NormalDistributions.inverseSF(.125), precision);
+        assertEquals(0, NormalDistributions.inverseSF(.5), precision);
+        assertEquals(Double.NEGATIVE_INFINITY, NormalDistributions.inverseSF(1), precision);
+        assertEquals(-1.1503493803760079, NormalDistributions.inverseSF(0.875), precision);
     }
 
     @Test

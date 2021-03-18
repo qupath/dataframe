@@ -5,7 +5,7 @@ import java.io.File;
 import java.util.Objects;
 
 public class Tests {
-    static DataFrame loadFromResources(final String name) {
+    public static DataFrame loadFromResources(final String name) {
         return DataFrame.from(new File(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource(name)).getFile()));
     }
 

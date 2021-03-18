@@ -49,39 +49,6 @@ public final class IntroSort {
     }
 
     /**
-     * Calculate the indices of sort and output as a double array. The args will be treated as the floor of the values
-     *
-     * @param args the output args
-     * @param data the data whose sort to get
-     */
-    public static void argSort(double[] args, double[] data) {
-        quickSort(args, data, 0, args.length, maxDepth(args.length));
-    }
-
-    /**
-     * Sort the double arguments based using a functional approach. The args will be treated as the floor of the values
-     *
-     * @param args      the args to sort
-     * @param getter    the int to double function
-     * @param ascending whether to sort ascending
-     */
-    public static void argSort(double[] args, IntToDoubleFunction getter, boolean ascending) {
-        if (ascending) {
-            quickSort(args, null, LessThan.fromDoubleGetter(getter), 0, args.length, maxDepth(args.length));
-        } else {
-            quickSort(args, null, LessThan.fromDoubleGetterReversed(getter), 0, args.length, maxDepth(args.length));
-        }
-    }
-
-    public static <T extends Comparable<T>> void argSort(double[] args, IntFunction<T> getter, boolean ascending) {
-        if (ascending) {
-            quickSort(args, null, (LessThan<T>) (data, leftIndex, rightIndex) -> getter.apply(leftIndex).compareTo(getter.apply(rightIndex)) < 0, 0, args.length, maxDepth(args.length));
-        } else {
-            quickSort(args, null, (LessThan<T>) (data, leftIndex, rightIndex) -> getter.apply(leftIndex).compareTo(getter.apply(rightIndex)) > 0, 0, args.length, maxDepth(args.length));
-        }
-    }
-
-    /**
      * Return the indices that would sort the array
      *
      * @param args      the original indices

@@ -2,7 +2,7 @@ package net.mahdilamb.stats.distributions;
 
 import net.mahdilamb.stats.libs.Cephes;
 
-import static net.mahdilamb.stats.MathUtils.gammaLN;
+import static net.mahdilamb.stats.libs.Cephes.gammaLN;
 
 
 /**

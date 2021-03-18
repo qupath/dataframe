@@ -6,7 +6,7 @@ import java.util.PrimitiveIterator;
 /**
  * A hash set of doubles
  */
-public class UnsortedDoubleSet implements Iterable<Double> {
+public final class UnsortedDoubleSet implements Iterable<Double> {
 
     static final int DEFAULT_INITIAL_CAPACITY = 8;
     static final float MAX_LOAD_FACTOR = 0.7f;
@@ -69,7 +69,6 @@ public class UnsortedDoubleSet implements Iterable<Double> {
     public boolean contains(double value) {
         return indexOf(value) != -1;
     }
-
 
     private int indexOf(double value) {
         int index = index(value);
