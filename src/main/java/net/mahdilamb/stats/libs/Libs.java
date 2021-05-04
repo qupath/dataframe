@@ -1,6 +1,8 @@
 package net.mahdilamb.stats.libs;
 
-
+/**
+ * Utility class with misc functions for working with numbers, predominantly in a bit-wise manner
+ */
 public final class Libs {
     private Libs() {
     }

@@ -1,16 +1,11 @@
 package net.mahdilamb.stats;
 
-import net.mahdilamb.dataframe.utils.DualPivotQuickSort;
-import net.mahdilamb.dataframe.utils.MergeSort;
 import net.mahdilamb.stats.distributions.NormalDistributions;
-import net.mahdilamb.stats.distributions.TDistributions;
-import net.mahdilamb.stats.libs.Cephes;
 import net.mahdilamb.stats.utils.FloydRivestSelection;
 import net.mahdilamb.utils.tuples.NamedDoubleTuple;
 import net.mahdilamb.utils.tuples.Tuple;
 
 import java.util.Arrays;
-import java.util.function.DoubleUnaryOperator;
 import java.util.function.IntToDoubleFunction;
 
 import static java.lang.Math.abs;

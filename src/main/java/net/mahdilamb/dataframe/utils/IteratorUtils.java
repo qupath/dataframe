@@ -3,6 +3,9 @@ package net.mahdilamb.dataframe.utils;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 
+/**
+ * Utilities for working with iterators
+ */
 public final class IteratorUtils {
     private IteratorUtils() {
 

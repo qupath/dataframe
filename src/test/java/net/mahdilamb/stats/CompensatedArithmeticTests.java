@@ -1,12 +1,13 @@
 package net.mahdilamb.stats;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static net.mahdilamb.stats.MathUtils.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public final class CompensatedArithmeticTests {
     static final double PRECISION = 1e-15;

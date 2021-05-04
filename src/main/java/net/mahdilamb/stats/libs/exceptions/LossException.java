@@ -2,10 +2,14 @@ package net.mahdilamb.stats.libs.exceptions;
 
 import net.mahdilamb.stats.libs.Libs;
 
+/**
+ * An exception representing precision loss when calculating a value
+ */
 public class LossException extends ArithmeticException {
     private LossException(final String message) {
         super(message);
     }
+
     /**
      * Raise an exception, if exceptions are enabled
      *
@@ -18,6 +22,7 @@ public class LossException extends ArithmeticException {
         raiseException(message);
         return orOut;
     }
+
     /**
      * Raise an exception or output a message, if exceptions are not enabled
      *

@@ -13,12 +13,14 @@ class TestCase:
     def generate_test_case(self) -> str:
         raise Exception(self.__class__.__name__ + " does not override the generate_test_case method")
 
+    @staticmethod
     def format_double(val: float) -> str:
         TestGenerator._usesDouble = True
         """Format a float as a Java double"""
         return "Double.NaN" if math.isnan(val) else str(val) if not math.isinf(
             val) else "Double.POSITIVE_INFINITY" if val > 0 else "Double.NEGATIVE_INFINITY"
 
+    @staticmethod
     def format_float(val: float) -> str:
         TestGenerator._usesFloat = True
         """Format a float as a Java float"""
@@ -106,7 +108,7 @@ class TestGenerator:
         # check directory
         out_copy = out_split[:-2]
         s = t = os.path.dirname(os.path.realpath(__file__))
-        while t != None and t != "" and len(out_copy):
+        while t is not None and t != "" and len(out_copy):
             s, t = os.path.split(s)
             if out_copy.pop() != t:
                 raise Exception(
@@ -114,8 +116,8 @@ class TestGenerator:
         with open(".".join(out_split[-2:]), 'w') as test_file:
             test_file.write("package %s;\n\n" % ".".join(out_split[:-2]));
             test_file.write("import static %s.*;\n" % self._cephes);
-            test_file.write("import static org.junit.Assert.assertEquals;\n\n");
-            test_file.write("import org.junit.Test;\n");
+            test_file.write("import static org.junit.jupiter.api.Assertions.assertEquals;\n\n");
+            test_file.write("import org.junit.jupiter.api.Test;\n");
             if TestGenerator._usesDouble:
                 test_file.write("import java.lang.Double;\n\n");
             if TestGenerator._usesFloat:

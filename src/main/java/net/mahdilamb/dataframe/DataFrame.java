@@ -94,7 +94,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     * Get an iterable over the names of the series
+     * @return an iterable over the names of the series
      */
     default Iterable<String> seriesNames() {
         return () -> new Iterator<>() {
@@ -113,7 +113,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
     }
 
     /**
-     * Get an iterable over the datatypes of the series
+     * @return an iterable over the datatypes of the series
      */
     default Iterable<DataType> dataTypes() {
         return () -> new Iterator<>() {
@@ -446,10 +446,11 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      *
      * @param name   the name of the dataframe
      * @param series the array of series
+     * @param <S>    the type of the comparable element
      * @return a dataframe wrapping the series
      */
     @SafeVarargs
-    static <S extends Comparable<S>, T extends Series<? extends S>> DataFrame from(final String name, T... series) {
+    static <S extends Comparable<S>> DataFrame from(final String name, Series<? extends S>... series) {
         return new DataFrameImpl.OfArray(name, series);
     }
 

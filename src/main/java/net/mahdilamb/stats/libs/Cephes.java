@@ -336,7 +336,6 @@ public final class Cephes {
 
     public static double nbdtri(int k, int n, double p) throws DomainException {
         return CephesImpl.nbdtr_c.nbdtri(k, n, p);
-
     }
 
     public static int shichi(double x, double[] results) {

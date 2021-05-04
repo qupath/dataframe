@@ -6,6 +6,7 @@ import java.util.PrimitiveIterator;
 /**
  * A hash set of doubles
  */
+//todo use primitives and track where NaN is
 public final class UnsortedDoubleSet implements Iterable<Double> {
 
     static final int DEFAULT_INITIAL_CAPACITY = 8;

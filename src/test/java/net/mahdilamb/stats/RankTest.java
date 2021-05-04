@@ -2,12 +2,13 @@ package net.mahdilamb.stats;
 
 import net.mahdilamb.dataframe.DataFrame;
 import net.mahdilamb.dataframe.DoubleSeries;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Objects;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
 
 /**
  * Compare the data ranking methods using the iris data set and validate against SciPy

@@ -61,18 +61,33 @@ public abstract class DataFrameImporter {
 
     static int TEST_LINES = 20;
     String[] putativeHeader;
+    /**
+     * A selection of the lines that are available for previewing
+     */
     protected String[] previewLines;
 
     char separator;
     Charset charset;
     char quoteCharacter;
 
-    /**
+    /*
      * Fields that should be calculated in the initial read
      */
+    /**
+     * The number of lines
+     */
     protected int numLines;
+    /**
+     * The number of columns
+     */
     protected int numColumns;
+    /**
+     * The data types
+     */
     protected DataType[] types;
+    /**
+     * The current dataframe preview
+     */
     protected transient DataFrame currentPreview;
 
     /**
@@ -170,7 +185,7 @@ public abstract class DataFrameImporter {
                     while (true) {
                         int currentO = o;
                         h = StringUtils.iterateLine(line, h, separator, quoteCharacter, str -> updateCounts(currentO, seriesTypes, typeCounts, str));
-                        if (h >= line.length()){
+                        if (h >= line.length()) {
                             break;
                         }
                         ++o;
@@ -207,7 +222,7 @@ public abstract class DataFrameImporter {
             }
         }
 
-        protected static void updateCounts(int o, DataType[] types, int[] counts, final String str) {
+        private static void updateCounts(int o, DataType[] types, int[] counts, final String str) {
             for (int b = 0; b < types.length; ++b) {
                 final DataType t = types[b];
                 if (str.length() == 0) {
@@ -297,14 +312,25 @@ public abstract class DataFrameImporter {
 
     }
 
+    /**
+     * @param c the character
+     * @return whether the character is a quote mark
+     */
     protected boolean isQuote(char c) {
         return c == quoteCharacter;
     }
 
+    /**
+     * @param c the character
+     * @return whether the character is a separator mark
+     */
     protected boolean isSeparator(char c) {
         return c == separator;
     }
 
+    /**
+     * Update the {@link #hasColumnNames} method guessing whether there are columnn names
+     */
     protected void guessHasColumnNames() {
         hasColumnNames = false;
         for (int i = 0; i < numColumns; ++i) {

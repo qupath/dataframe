@@ -1,9 +1,10 @@
 package net.mahdilamb.stats.cephes;
 
-import static net.mahdilamb.stats.libs.Cephes.*;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static net.mahdilamb.stats.libs.Cephes.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public final class JUnitTests {
 	private static final double precision = 0.00000001;
 

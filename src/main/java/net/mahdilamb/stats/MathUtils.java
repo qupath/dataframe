@@ -1,7 +1,5 @@
 package net.mahdilamb.stats;
 
-import static net.mahdilamb.stats.libs.Cephes.Gamma;
-
 /**
  * Utility class for mathematics functions
  */

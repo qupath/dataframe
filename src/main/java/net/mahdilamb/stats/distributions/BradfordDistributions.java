@@ -8,18 +8,37 @@ public final class BradfordDistributions {
 
     }
 
+    /**
+     * @param x x
+     * @param c c
+     * @return the PDF at x
+     */
     public static double PDF(double x, double c) {
         return c / (c * x + 1.0) / Math.log1p(c);
     }
 
+    /**
+     * @param x x
+     * @param c c
+     * @return the CDF at x
+     */
     public static double CDF(double x, double c) {
         return Math.log1p(c * x) / Math.log1p(c);
     }
 
+    /**
+     * @param q q
+     * @param c c
+     * @return the PPF at x
+     */
     public static double PPF(double q, double c) {
         return Math.expm1(q * Math.log1p(c)) / c;
     }
 
+    /**
+     * @param c c
+     * @return the summary statistics for a Bradford distribution with the given parameters
+     */
     public static SummaryStatistics stats(double c) {
         final double k = Math.log(1.0 + c);
         final double mu = (c - k) / (c * k);

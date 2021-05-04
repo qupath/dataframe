@@ -3,7 +3,6 @@ package net.mahdilamb.dataframe;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.function.IntToDoubleFunction;
 

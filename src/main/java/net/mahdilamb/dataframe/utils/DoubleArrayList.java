@@ -52,7 +52,7 @@ public final class DoubleArrayList implements Iterable<Double> {
     }
 
     private void add0(double value, int index) {
-        if (size == arr.length) {
+        if (size >= arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
         }
         arr[index] = value;

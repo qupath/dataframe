@@ -5,13 +5,13 @@ import net.mahdilamb.stats.distributions.NormalDistributions;
 import net.mahdilamb.stats.libs.Boost;
 import net.mahdilamb.stats.libs.Cephes;
 import net.mahdilamb.stats.libs.Libs;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
 import static net.mahdilamb.stats.libs.Cephes.chbevl;
 import static net.mahdilamb.stats.libs.Cephes.ndtri;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public final class JUnitTests {
     private static final double precision = 0.00000001;

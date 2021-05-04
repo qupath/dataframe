@@ -1,7 +1,6 @@
 package net.mahdilamb.dataframe.utils;
 
 import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * Array list backed by an array of primitive ints

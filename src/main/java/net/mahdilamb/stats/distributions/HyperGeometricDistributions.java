@@ -2,11 +2,23 @@ package net.mahdilamb.stats.distributions;
 
 import net.mahdilamb.stats.libs.Cephes;
 
+/**
+ * Utility class for working with hypergeometric distributions
+ */
 public final class HyperGeometricDistributions {
     private HyperGeometricDistributions() {
 
     }
 
+    /**
+     * Calculate the log PMF in a hyper geometric distribution
+     *
+     * @param k k
+     * @param M M
+     * @param n n
+     * @param N n
+     * @return the associated log PMF
+     */
     public static double logPMF(double k, double M, double n, double N) {
         double bad = M - n;
         return (Cephes.betaln(n + 1, 1) + Cephes.betaln(bad + 1, 1) + Cephes.betaln(M - N + 1, N + 1) -
@@ -14,10 +26,25 @@ public final class HyperGeometricDistributions {
                 Cephes.betaln(M + 1, 1));
     }
 
+    /**
+     * Calculate the PMF in a hyper geometric distribution
+     *
+     * @param k k
+     * @param M M
+     * @param n n
+     * @param N n
+     * @return the associated PMF
+     */
     public static double PMF(double k, double M, double n, double N) {
         return Math.exp(logPMF(k, M, n, N));
     }
 
+    /**
+     * @param M M
+     * @param n n
+     * @param N n
+     * @return the summary statistics of a hyper geometric function as defined by the parameters
+     */
     public static SummaryStatistics stats(double M, double n, double N) {
         double m = M - n;
         double p = n / M;

@@ -50,6 +50,9 @@ public enum DataType {
         return matcher.matcher(string).matches();
     }
 
+    /**
+     * @return whether the data type supports null types
+     */
     public boolean supportsNull() {
         return supportsNull;
     }

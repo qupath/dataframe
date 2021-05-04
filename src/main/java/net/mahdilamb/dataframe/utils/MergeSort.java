@@ -3,6 +3,10 @@ package net.mahdilamb.dataframe.utils;
 import java.util.function.IntToDoubleFunction;
 
 //Adapted from https://www.baeldung.com/java-merge-sort
+
+/**
+ * Merge sort implementation
+ */
 public final class MergeSort {
     private MergeSort() {
 
@@ -26,22 +30,6 @@ public final class MergeSort {
         }
     }
 
-    public static void argSort(double[] a, int n) {
-        if (n < 2) {
-            return;
-        }
-        int mid = n >> 1;
-        double[] l = new double[mid];
-        double[] r = new double[n - mid];
-
-        System.arraycopy(a, 0, l, 0, mid);
-        System.arraycopy(a, mid, r, 0, n - mid);
-        argSort(l, mid);
-        argSort(r, n - mid);
-
-        merge(a, l, r, mid, n - mid);
-    }
-
     private static void merge(IntToDoubleFunction a, int[] args, int[] l, int[] r, int left, int right) {
         int i = 0, j = 0, k = 0;
         while (i < left && j < right) {
@@ -59,25 +47,38 @@ public final class MergeSort {
         }
     }
 
-    public static void argSort(int[] args, IntToDoubleFunction a, int n) {
-        if (n < 2) {
+    /**
+     * Perform merge sort in a functional style
+     *
+     * @param args the args to sort
+     * @param data the index-to-double getter
+     * @param size the number of elements in the original object
+     */
+    public static void argSort(int[] args, IntToDoubleFunction data, int size) {
+        if (size < 2) {
             return;
         }
-        int mid = n >> 1;
+        int mid = size >> 1;
         int[] l = new int[mid];
-        int[] r = new int[n - mid];
+        int[] r = new int[size - mid];
 
         System.arraycopy(args, 0, l, 0, mid);
-        System.arraycopy(args, mid, r, 0, n - mid);
+        System.arraycopy(args, mid, r, 0, size - mid);
 
-        argSort(l, a, mid);
-        argSort(r, a, n - mid);
+        argSort(l, data, mid);
+        argSort(r, data, size - mid);
 
-        merge(a, args, l, r, mid, n - mid);
+        merge(data, args, l, r, mid, size - mid);
     }
 
-    public static void argSort(int[] args, IntToDoubleFunction a) {
-        argSort(args, a, args.length);
+    /**
+     * Perform merge sort in a functional style
+     *
+     * @param args the args to sort
+     * @param data the index-to-double getter
+     */
+    public static void argSort(int[] args, IntToDoubleFunction data) {
+        argSort(args, data, args.length);
     }
 
 }

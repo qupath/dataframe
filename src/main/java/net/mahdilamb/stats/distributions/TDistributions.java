@@ -21,7 +21,7 @@ public final class TDistributions {
      * @return the PDF at x in a t-distribution of the given degrees of freedom
      */
     public static double PDF(double x, int degreesOfFreedom) {
-        final double r = degreesOfFreedom;
+        @SuppressWarnings("UnnecessaryLocalVariable") final double r = degreesOfFreedom;
         return Math.exp(gammaLN((r + 1) / 2) - (gammaLN(r / 2))) / (Math.sqrt(Math.PI * r) * Math.pow((1 + x * x / r), ((r + 1) / 2)));
     }
 
@@ -33,6 +33,7 @@ public final class TDistributions {
      * @return the log PDF at x in a t-distribution of the given degrees of freedom
      */
     public static double logPDF(double x, int degreesOfFreedom) {
+        //noinspection UnnecessaryLocalVariable
         final double r = degreesOfFreedom;
         double lPx = gammaLN((r + 1) / 2) - gammaLN(r / 2);
         lPx -= 0.5 * Math.log(r * Math.PI) + (r + 1) / 2 * Math.log(1 + (x * x) / r);
