@@ -1,8 +1,7 @@
 package net.mahdilamb.stats;
 
-import net.mahdilamb.utils.tuples.NamedDoubleTuple;
-import net.mahdilamb.utils.tuples.NamedGenericTuple;
-import net.mahdilamb.utils.tuples.Tuple;
+import net.mahdilamb.stats.utils.Bin;
+import net.mahdilamb.stats.utils.BinEdges;
 
 import java.util.Iterator;
 
@@ -36,8 +35,8 @@ public interface Histogram {
      * @param bin the bin
      * @return a tuple representing the bin
      */
-    default NamedDoubleTuple getBin(int bin) {
-        return Tuple.namedTuple(Tuple.of(getBinEdges()[bin], getBinEdges()[bin + 1]), "min", "max");
+    default BinEdges getBin(int bin) {
+        return new BinEdges(getBinEdges()[bin], getBinEdges()[bin + 1]);
     }
 
     /**
@@ -48,10 +47,9 @@ public interface Histogram {
     }
 
     /**
-     *
      * @return an iterable over the bins
      */
-    default Iterable<NamedGenericTuple<?>> bins(){
+    default Iterable<Bin> bins() {
         return () -> new Iterator<>() {
             private int i = 0;
 
@@ -61,8 +59,8 @@ public interface Histogram {
             }
 
             @Override
-            public NamedGenericTuple<?> next() {
-                return Tuple.namedTuple(Tuple.of((Object) getBinEdges()[i], getBinEdges()[++i], getCount()[i - 1]), "min", "max", "count");
+            public Bin next() {
+                return new Bin(getBinEdges()[i], getBinEdges()[++i], getCount()[i - 1]);
             }
         };
     }

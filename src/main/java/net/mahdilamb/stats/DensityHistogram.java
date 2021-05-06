@@ -1,7 +1,6 @@
 package net.mahdilamb.stats;
 
-import net.mahdilamb.utils.tuples.NamedDoubleTuple;
-import net.mahdilamb.utils.tuples.Tuple;
+import net.mahdilamb.stats.utils.DensityBin;
 
 import java.util.Iterator;
 
@@ -27,7 +26,7 @@ public interface DensityHistogram extends Histogram {
     /**
      * @return an iterable over the density bins
      */
-    default Iterable<NamedDoubleTuple> densityBins() {
+    default Iterable<DensityBin> densityBins() {
         return () -> new Iterator<>() {
             private int i = 0;
 
@@ -37,8 +36,8 @@ public interface DensityHistogram extends Histogram {
             }
 
             @Override
-            public NamedDoubleTuple next() {
-                return Tuple.namedTuple(Tuple.of(getBinEdges()[i], getBinEdges()[++i], getDensity()[i - 1]), "min", "max", "density");
+            public DensityBin next() {
+                return new DensityBin(getBinEdges()[i], getBinEdges()[++i], getDensity()[i - 1]);
             }
         };
     }

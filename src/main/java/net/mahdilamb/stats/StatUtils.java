@@ -2,8 +2,7 @@ package net.mahdilamb.stats;
 
 import net.mahdilamb.stats.distributions.NormalDistributions;
 import net.mahdilamb.stats.utils.FloydRivestSelection;
-import net.mahdilamb.utils.tuples.NamedDoubleTuple;
-import net.mahdilamb.utils.tuples.Tuple;
+import net.mahdilamb.stats.utils.Statistic;
 
 import java.util.Arrays;
 import java.util.function.IntToDoubleFunction;
@@ -1505,7 +1504,7 @@ public strictfp final class StatUtils {
      * @param values the values to check
      * @return a named-tuple containing the Z-statistic ("statistic") and p-value ("p-value")
      */
-    public static NamedDoubleTuple skewTest(double[] values) {
+    public static Statistic skewTest(double[] values) {
         double b2 = skewness(values);
         int n = values.length;
         if (n < 8) {
@@ -1521,7 +1520,7 @@ public strictfp final class StatUtils {
         y = y == 0 ? 1 : y;
 
         double Z = delta * Math.log(y / alpha + Math.sqrt(Math.pow(y / alpha, 2) + 1));
-        return Tuple.namedTuple("statistic", Z, P_VALUE, 2 * NormalDistributions.SF(Math.abs(Z)));
+        return new Statistic("statistic", Z,  2 * NormalDistributions.SF(Math.abs(Z)));
     }
 
 }

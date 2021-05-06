@@ -1,11 +1,10 @@
 package net.mahdilamb.stats.distributions;
 
-import net.mahdilamb.utils.tuples.DoubleTuple;
 
 /**
  * Summary statistics of a distribution
  */
-public final class SummaryStatistics implements DoubleTuple {
+public final class SummaryStatistics {
     /**
      * Precision for output string
      */
@@ -45,27 +44,6 @@ public final class SummaryStatistics implements DoubleTuple {
      */
     public final double getKurtosis() {
         return kurtosis;
-    }
-
-    @Override
-    public double get(int el) {
-        switch (el) {
-            case 0:
-                return mean;
-            case 1:
-                return variation;
-            case 2:
-                return skewness;
-            case 3:
-                return kurtosis;
-            default:
-                throw new IndexOutOfBoundsException("Index must be >=0 and < 4");
-        }
-    }
-
-    @Override
-    public final int size() {
-        return 4;
     }
 
     public final String toString() {

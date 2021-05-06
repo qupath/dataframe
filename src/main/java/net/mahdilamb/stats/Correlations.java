@@ -1,11 +1,11 @@
 package net.mahdilamb.stats;
 
+import net.mahdilamb.stats.utils.Statistic;
 import net.mahdilamb.dataframe.utils.DualPivotQuickSort;
 import net.mahdilamb.dataframe.utils.MergeSort;
 import net.mahdilamb.stats.distributions.TDistributions;
 import net.mahdilamb.stats.libs.Cephes;
-import net.mahdilamb.utils.tuples.NamedDoubleTuple;
-import net.mahdilamb.utils.tuples.Tuple;
+
 
 import java.util.function.IntToDoubleFunction;
 
@@ -80,16 +80,16 @@ public class Correlations {
      * @param size the number of elements
      * @return a named-tuple containing the correlation efficient ("coeff") and the p-value ("p-value")
      */
-    public static NamedDoubleTuple pearsonsCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+    public static Statistic pearsonsCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
         if (size < 2) {
             throw new ArithmeticException("must be at least 2 values");
         }
         if (isConstant(x, size) || isConstant(y, size)) {
             System.err.println("x or y values are constant");
-            return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
+            return new Statistic("coeff", Double.NaN, Double.NaN);
         }
         if (size == 2) {
-            return Tuple.namedTuple("coeff", Math.signum(x.applyAsDouble(1) - x.applyAsDouble(0)) * Math.signum(y.applyAsDouble(1) - y.applyAsDouble(0)), P_VALUE, 1);
+            return new Statistic("coeff", Math.signum(x.applyAsDouble(1) - x.applyAsDouble(0)) * Math.signum(y.applyAsDouble(1) - y.applyAsDouble(0)), 1);
         }
         double xMean = mean(x, size);
         double yMean = mean(y, size);
@@ -122,7 +122,7 @@ public class Correlations {
         r = Math.max(min(r, 1.0), -1.0);
         double ab = size / 2. - 1;
         double prob = 2 * Cephes.btdtr(ab, ab, 0.5 * (1 - Math.abs((r))));
-        return Tuple.namedTuple("coeff", r, P_VALUE, prob);
+        return new Statistic("coeff", r, prob);
     }
 
     /**
@@ -269,18 +269,18 @@ public class Correlations {
      * @return a named double tuple containing the correlation coefficient ("coeff") and the p-value ("p-value")
      * comparing the correlation to a Student's t-distribution
      */
-    public static NamedDoubleTuple spearmansCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
+    public static Statistic spearmansCorrelationP(IntToDoubleFunction x, IntToDoubleFunction y, int size) {
         if (size <= 1) {
-            return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
+            return new Statistic("coeff", Double.NaN, Double.NaN);
         }
         if (isConstant(x, size) || isConstant(y, size)) {
             System.err.println("x and/or y values are constant");
-            return Tuple.namedTuple("coeff", Double.NaN, P_VALUE, Double.NaN);
+            return new Statistic("coeff", Double.NaN, Double.NaN);
         }
         double[] xRanks = rankData(x, size);
         double[] yRanks = rankData(y, size);
         double c = correlationCoefficient(xRanks, yRanks);
         int dof = size - 2;
-        return Tuple.namedTuple("coeff", c, P_VALUE, 2 * TDistributions.SF(Math.abs(c * Math.sqrt(Math.max(0, (dof / ((c + 1.0) * (1.0 - c)))))), dof));
+        return new Statistic("coeff", c, 2 * TDistributions.SF(Math.abs(c * Math.sqrt(Math.max(0, (dof / ((c + 1.0) * (1.0 - c)))))), dof));
     }
 }

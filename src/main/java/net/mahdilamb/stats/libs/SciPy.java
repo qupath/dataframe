@@ -43,7 +43,7 @@ public final class SciPy {
         Copyright © 2003-2019 SciPy Developers.
         All rights reserved.
          */
-  private   static final class ndrt_c {
+    private static final class ndrt_c {
         private ndrt_c() {
 
         }
