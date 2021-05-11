@@ -90,12 +90,10 @@ public final class BooleanArrayList implements Iterable<Boolean> {
             throw new IllegalArgumentException("to must be greater then from");
         }
         if (from != to) {
-            final int elements = to - from;
             if (size != arr.length) {
-
-                System.arraycopy(arr, to, arr, from, elements);
+                System.arraycopy(arr, to, arr, from, size - to);
             }
-            size -= elements;
+            size -= to - from;
         }
     }
 
