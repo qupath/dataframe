@@ -93,8 +93,12 @@ public final class DoubleArrayList implements Iterable<Double> {
             throw new IllegalArgumentException("to must be greater then from");
         }
         if (from != to) {
-            size += to - from;
-            System.arraycopy(arr, to, arr, from, size);
+            final int elements = to - from;
+            if (size != arr.length) {
+
+                System.arraycopy(arr, to, arr, from, elements);
+            }
+            size -= elements;
         }
     }
 
@@ -239,5 +243,6 @@ public final class DoubleArrayList implements Iterable<Double> {
         }
         return stringBuilder.append(']').toString();
     }
+
 
 }

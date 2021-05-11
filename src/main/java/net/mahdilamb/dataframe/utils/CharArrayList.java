@@ -71,9 +71,14 @@ public final class CharArrayList implements Iterable<Character> {
     public void remove(int from, int to) {
         if (from > to) {
             throw new IllegalArgumentException("to must be greater then from");
-        } else if (from != to) {
-            size += to - from;
-            System.arraycopy(arr, to, arr, from, size);
+        }
+        if (from != to) {
+            final int elements = to - from;
+            if (size != arr.length) {
+
+                System.arraycopy(arr, to, arr, from, elements);
+            }
+            size -= elements;
         }
     }
 
