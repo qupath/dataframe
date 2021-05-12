@@ -6,7 +6,7 @@ import java.util.PrimitiveIterator;
 /**
  * Array list backed by an array of primitive doubles
  */
-public final class DoubleArrayList implements Iterable<Double> {
+public final class DoubleArrayList implements Iterable<Double>, Cloneable {
     static final int INITIAL_CAPACITY = 8;
     private double[] arr;
     private int size;
@@ -93,9 +93,7 @@ public final class DoubleArrayList implements Iterable<Double> {
             throw new IllegalArgumentException("to must be greater then from");
         }
         if (from != to) {
-            if (size != arr.length) {
-                System.arraycopy(arr, to, arr, from, size - to);
-            }
+            System.arraycopy(arr, to, arr, from, size - to);
             size -= to - from;
         }
     }
@@ -256,5 +254,8 @@ public final class DoubleArrayList implements Iterable<Double> {
         return stringBuilder.append(']').toString();
     }
 
-
+    @Override
+    public Object clone() {
+        return new DoubleArrayList(arr.clone());
+    }
 }

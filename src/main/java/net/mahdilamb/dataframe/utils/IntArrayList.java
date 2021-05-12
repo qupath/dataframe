@@ -73,9 +73,7 @@ public final class IntArrayList implements Iterable<Integer> {
             throw new IllegalArgumentException("to must be greater then from");
         }
         if (from != to) {
-            if (size != arr.length) {
-                System.arraycopy(arr, to, arr, from, size - to);
-            }
+            System.arraycopy(arr, to, arr, from, size - to);
             size -= to - from;
         }
     }
