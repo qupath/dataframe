@@ -143,6 +143,20 @@ public final class CharArrayList implements Iterable<Character> {
     }
 
     /**
+     * Set a value
+     *
+     * @param index the index
+     * @param value the value to set
+     * @throws IndexOutOfBoundsException if the requested index is out of range
+     */
+    public void set(int index, char value) {
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException(index);
+        }
+        arr[index] = value;
+    }
+
+    /**
      * @return the size of the array
      */
     public int size() {
