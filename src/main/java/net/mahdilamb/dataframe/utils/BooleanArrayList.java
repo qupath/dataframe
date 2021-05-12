@@ -39,10 +39,10 @@ public final class BooleanArrayList implements Iterable<Boolean> {
     /**
      * Add an element to the array list at the specified index
      *
-     * @param value the value to add
      * @param index the index to add to
+     * @param value the value to add
      */
-    public void add(boolean value, int index) {
+    public void add(int index, boolean value) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
@@ -57,7 +57,7 @@ public final class BooleanArrayList implements Iterable<Boolean> {
      * @param value the value to add
      */
     public void add(boolean value) {
-        add(value, size);
+        add(size, value);
     }
 
     /**

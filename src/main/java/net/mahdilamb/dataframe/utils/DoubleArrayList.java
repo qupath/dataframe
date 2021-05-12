@@ -40,18 +40,18 @@ public final class DoubleArrayList implements Iterable<Double> {
     /**
      * Add an element to the array list at the specified index
      *
-     * @param value the value to add
      * @param index the index to add to
+     * @param value the value to add
      */
-    public void add(double value, int index) {
+    public void add(int index, double value) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
-        add0(value, index);
+        add0(index, value);
 
     }
 
-    private void add0(double value, int index) {
+    private void add0(int index, double value) {
         if (size >= arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
         }
@@ -65,7 +65,7 @@ public final class DoubleArrayList implements Iterable<Double> {
      * @param value the value to add
      */
     public void add(double value) {
-        add0(value, size);
+        add0(size, value);
     }
 
     /**

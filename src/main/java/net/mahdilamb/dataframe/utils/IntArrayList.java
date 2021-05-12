@@ -41,10 +41,10 @@ public final class IntArrayList implements Iterable<Integer> {
     /**
      * Add an element to the array list at the specified index
      *
-     * @param value the value to add
      * @param index the index to add to
+     * @param value the value to add
      */
-    public void add(int value, int index) {
+    public void add(int index, int value) {
         checkRange(index);
         if (size == arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
@@ -59,7 +59,7 @@ public final class IntArrayList implements Iterable<Integer> {
      * @param value the value to add
      */
     public void add(int value) {
-        add(value, size);
+        add(size, value);
     }
 
     /**

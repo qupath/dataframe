@@ -39,10 +39,10 @@ public final class CharArrayList implements Iterable<Character> {
     /**
      * Add an element to the array list at the specified index
      *
-     * @param value the value to add
      * @param index the index to add to
+     * @param value the value to add
      */
-    public void add(char value, int index) {
+    public void add(int index, char value) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
@@ -59,7 +59,7 @@ public final class CharArrayList implements Iterable<Character> {
      * @param value the value to add
      */
     public void add(char value) {
-        add(value, size);
+        add(size, value);
     }
 
     /**
