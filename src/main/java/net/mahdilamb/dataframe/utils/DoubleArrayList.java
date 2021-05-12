@@ -55,6 +55,7 @@ public final class DoubleArrayList implements Iterable<Double>, Cloneable {
         if (size >= arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
         }
+        System.arraycopy(arr, index, arr, index + 1, size - index);
         arr[index] = value;
         ++size;
     }
@@ -258,4 +259,5 @@ public final class DoubleArrayList implements Iterable<Double>, Cloneable {
     public Object clone() {
         return new DoubleArrayList(arr.clone());
     }
+
 }

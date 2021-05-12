@@ -46,7 +46,15 @@ public final class BooleanArrayList implements Iterable<Boolean> {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
-        ensureCapacity(arr.length + 1);
+        add0(index, value);
+
+    }
+
+    private void add0(int index, boolean value) {
+        if (size >= arr.length) {
+            arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
+        }
+        System.arraycopy(arr, index, arr, index + 1, size - index);
         arr[index] = value;
         ++size;
     }
@@ -57,17 +65,17 @@ public final class BooleanArrayList implements Iterable<Boolean> {
      * @param value the value to add
      */
     public void add(boolean value) {
-        add(size, value);
+        add0(size, value);
     }
 
     /**
-     * Add all the elements to the end of the array list
+     * Add all the values to the end of the list
      *
      * @param values the values to add
      */
     public void addAll(boolean... values) {
         if (size < arr.length + values.length) {
-            ensureCapacity(arr.length + values.length);
+            arr = Arrays.copyOf(arr, arr.length + Math.max(values.length, arr.length >>> 1));
         }
         System.arraycopy(values, 0, arr, size, values.length);
         size += values.length;

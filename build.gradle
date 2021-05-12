@@ -24,7 +24,7 @@ compileJava {
 }
 
 group 'net.mahdilamb'
-version '0.2.24'
+version '0.2.25'
 ext.moduleName = 'net.mahdilamb.dataframe'
 
 repositories {

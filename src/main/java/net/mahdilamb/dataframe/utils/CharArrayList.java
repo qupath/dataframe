@@ -46,9 +46,15 @@ public final class CharArrayList implements Iterable<Character> {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(index);
         }
-        if (size == arr.length) {
+        add0(index, value);
+
+    }
+
+    private void add0(int index, char value) {
+        if (size >= arr.length) {
             arr = Arrays.copyOf(arr, arr.length + Math.max(1, arr.length >>> 1));
         }
+        System.arraycopy(arr, index, arr, index + 1, size - index);
         arr[index] = value;
         ++size;
     }
@@ -59,7 +65,20 @@ public final class CharArrayList implements Iterable<Character> {
      * @param value the value to add
      */
     public void add(char value) {
-        add(size, value);
+        add0(size, value);
+    }
+
+    /**
+     * Add all the values to the end of the list
+     *
+     * @param values the values to add
+     */
+    public void addAll(char... values) {
+        if (size < arr.length + values.length) {
+            arr = Arrays.copyOf(arr, arr.length + Math.max(values.length, arr.length >>> 1));
+        }
+        System.arraycopy(values, 0, arr, size, values.length);
+        size += values.length;
     }
 
     /**
