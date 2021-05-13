@@ -30,26 +30,26 @@ import static net.mahdilamb.stats.ArrayUtils.intRange;
  * <p>
  * Methods includes:
  * <ul>
- *     <li>(double) {@link #sum}/li>
- *     <li>(double) {@link #mean}/li>
- *     <li>(double) {@link #variance}/li>
- *     <li>(double) {@link #standardDeviation}/li>
+ *     <li>(double) {@link #sum}</li>
+ *     <li>(double) {@link #mean}</li>
+ *     <li>(double) {@link #variance}</li>
+ *     <li>(double) {@link #standardDeviation}</li>
  *     <li>(double) {@link #moment}</li>
  *     <li>(double) {@link #skewness}</li>
  *     <li>(double) {@link #kurtosis}</li>
  *     <li>(double) {@link #pearsonsKurtosis}</li>
- *     <li>(double) {@link #count}/li>
- *     <li>(double) {@link #min}/li>
- *     <li>(double) {@link #max}/li>
- *     <li>(double) {@link #range}/li>
- *     <li>(double) {@link #quartile}/li>
- *     <li>(double) {@link #median}/li>
- *     <li>(double) {@link #quartileOne}/li>
- *     <li>(double) {@link #quartileThree}/li>
- *     <li>(double) {@link #interQuartileRange}/li>
- *     <li>(double) {@link #quantile}/li>
- *     <li>(double) {@link #percentile}/li>
- *     <li>(double) {@link #standardError}/li>
+ *     <li>(double) {@link #count}</li>
+ *     <li>(double) {@link #min}</li>
+ *     <li>(double) {@link #max}</li>
+ *     <li>(double) {@link #range}</li>
+ *     <li>(double) {@link #quartile}</li>
+ *     <li>(double) {@link #median}</li>
+ *     <li>(double) {@link #quartileOne}</li>
+ *     <li>(double) {@link #quartileThree}</li>
+ *     <li>(double) {@link #interQuartileRange}</li>
+ *     <li>(double) {@link #quantile}</li>
+ *     <li>(double) {@link #percentile}</li>
+ *     <li>(double) {@link #standardError}</li>
  * </ul>
  */
 public strictfp final class StatUtils {
@@ -1346,8 +1346,7 @@ public strictfp final class StatUtils {
             }
         }
         if (nbins == nBinsUpperBound) {
-
-            System.out.println("Stone bin width estimator: the number of bins estimated may be suboptimal");
+            System.err.println("Stone bin width estimator: the number of bins estimated may be suboptimal");
         }
         return ptpX / nbins;
     }
@@ -1520,7 +1519,7 @@ public strictfp final class StatUtils {
         y = y == 0 ? 1 : y;
 
         double Z = delta * Math.log(y / alpha + Math.sqrt(Math.pow(y / alpha, 2) + 1));
-        return new Statistic("statistic", Z,  2 * NormalDistributions.SF(Math.abs(Z)));
+        return new Statistic("statistic", Z, 2 * NormalDistributions.SF(Math.abs(Z)));
     }
 
 }
