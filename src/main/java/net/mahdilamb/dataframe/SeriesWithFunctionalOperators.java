@@ -70,7 +70,7 @@ interface SeriesWithFunctionalOperators<T extends Comparable<T>> extends Series<
      * Reduce the series down to a external type
      *
      * @param initialize the supplier of the external type (e.g. constructor for an array list {@code <i>()->new ArrayList<>()</i>}
-     * @param func       the function to apply to each element (e.g. add method <i>(arr,el) -> arr.add(el)</i>)
+     * @param func       the function to apply to each element (e.g. add method <i>(arr,el) -{@literal >} arr.add(el)</i>)
      * @param <S>        the type of the external object
      * @return the external object
      */

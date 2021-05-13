@@ -1,15 +1,21 @@
-plugins {
-    id 'java-library'
-    id 'maven-publish'
-    id 'signing'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.bmuschko:gradle-nexus-plugin:2.3.1")
+    }
 }
 
-ext.moduleName = 'net.mahdilamb.dataframe'
-
+plugins {
+    id 'java'
+    id("maven")
+    id("signing")
+    id("org.spongepowered.plugin") version "0.6"
+}
+apply plugin: "com.bmuschko.nexus"
 java {
     modularity.inferModulePath = true
-    withJavadocJar()
-    withSourcesJar()
 }
 compileJava {
     //will work with Java 1.8, but this is required as there is a module-info.java
@@ -19,6 +25,7 @@ compileJava {
 
 group 'net.mahdilamb'
 version '0.2.3'
+ext.moduleName = 'net.mahdilamb.dataframe'
 
 repositories {
     mavenCentral()
@@ -36,59 +43,44 @@ test {
 javadoc {
     options.tags = ["apiNote", "implNote", "implSpec"]
 }
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from(components["java"])
-            pom {
-                name = "dataframe"
-                description = "A general use dataframe and statistics package"
-                url = "https://github.com/mahdilamb/dataframe"
-                inceptionYear = "2020"
 
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id = "mahdilamb"
-                        name = "Mahdi Lamb"
-                        email = "mahdilamb[at]gmail[dot]com"
-                    }
-                }
-                scm {
-                    url = "https://github.com/mahdilamb/dataframe"
-                    connection = "scm:https://mahdilamb@github.com/mahdilamb/dataframe.git"
-                    developerConnection = "scm:git://github.com/mahdilamb/dataframe.git"
-                }
+modifyPom {
+
+    project {
+        name = "dataframe"
+        description = "Data Frame"
+        url = "https://github.com/mahdilamb/dataframe"
+        inceptionYear = "2020"
+
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
             }
         }
-    }
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            credentials {
-                username = project.ossrhUsername
-                password = project.ossrhPassword
+        developers {
+            developer {
+                id = "mahdilamb"
+                name = "Mahdi Lamb"
+                email = "mahdilamb[at]gmail[dot]com"
             }
+        }
+        scm {
+            url = "https://github.com/mahdilamb/dataframe"
+            connection = "scm:https://mahdilamb@github.com/mahdilamb/dataframe.git"
+            developerConnection = "scm:git://github.com/mahdilamb/dataframe.git"
         }
     }
 }
 
-signing {
-    String signingKeyId = findProperty("signing.keyId")
-    String signingKey = findProperty("signing.secretKeyRingFile")
-    String signingPassword = findProperty("signing.password")
-    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-    sign configurations.archives
-
+extraArchive {
+    sources = true
+    tests = true
+    javadoc = true
 }
 
-tasks.withType(Sign) {
-    onlyIf { !version.endsWith("SNAPSHOT") }
+nexus {
+    sign = !version.endsWith("SNAPSHOT")
+    repositoryUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    snapshotRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
 }

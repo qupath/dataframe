@@ -114,6 +114,7 @@ public final class FloydRivestSelection {
      * @param left  the start index
      * @param right the end index
      * @param k     the k element
+     * @return the value of the kth element
      */
     public static double select(int[] args, double[] array, int left, int right, int k) {
         while (right > left) {
@@ -158,6 +159,7 @@ public final class FloydRivestSelection {
         }
         return array[args[k]];
     }
+
     /**
      * Select the kth element in an array using a functional style
      *
@@ -166,6 +168,7 @@ public final class FloydRivestSelection {
      * @param left  the start index
      * @param right the end index
      * @param k     the k element
+     * @return the value of the kth element
      */
     public static double select(int[] args, IntToDoubleFunction array, int left, int right, int k) {
         while (right > left) {
