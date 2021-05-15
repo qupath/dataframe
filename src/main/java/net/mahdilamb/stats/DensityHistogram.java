@@ -27,7 +27,7 @@ public interface DensityHistogram extends Histogram {
      * @return an iterable over the density bins
      */
     default Iterable<DensityBin> densityBins() {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<DensityBin>() {
             private int i = 0;
 
             @Override

@@ -97,7 +97,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * @return an iterable over the names of the series
      */
     default Iterable<String> seriesNames() {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<String>() {
             private int i = 0;
 
             @Override
@@ -116,7 +116,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      * @return an iterable over the datatypes of the series
      */
     default Iterable<DataType> dataTypes() {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<DataType>() {
             private int i = 0;
 
             @Override
@@ -426,7 +426,7 @@ public interface DataFrame extends Iterable<Series<Comparable<Object>>> {
      */
     @Override
     default Iterator<Series<Comparable<Object>>> iterator() {
-        return new Iterator<>() {
+        return new Iterator<Series<Comparable<Object>>>() {
             private int i = 0;
 
             @Override

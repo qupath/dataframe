@@ -50,7 +50,7 @@ public interface Histogram {
      * @return an iterable over the bins
      */
     default Iterable<Bin> bins() {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<Bin>() {
             private int i = 0;
 
             @Override

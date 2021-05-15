@@ -437,7 +437,7 @@ abstract class DataFrameImpl implements DataFrame {
         @Override
         public Iterator<DataFrame> iterator() {
 
-            return new Iterator<>() {
+            return new Iterator<DataFrame>() {
                 private int i = 0;
 
                 @Override
